@@ -1,6 +1,126 @@
 ---
 title: i18next
-description: Using LangSync with i18next.
+description: Using LangSync with i18next, react-i18next, or vue-i18next.
 ---
 
-> **Status:** Coming soon.
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
+import { Callout } from 'fumadocs-ui/components/callout';
+
+LangSync detects [`i18next`](https://www.i18next.com) automatically when
+any of `i18next`, `react-i18next`, or `vue-i18next` is in your project's
+`package.json`.
+
+## Locale file layout
+
+LangSync writes nested JSON, which is i18next's default format:
+
+```json title="src/i18n/en.json"
+{
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel"
+  },
+  "errors": {
+    "required": "{{field}} is required"
+  }
+}
+```
+
+This works directly with the standard
+[i18next JSON v4 backend](https://www.i18next.com/misc/json-format).
+
+## Wire i18next to consume the files
+
+<Tabs items={['react-i18next', 'i18next (vanilla)', 'vue-i18next']}>
+<Tab value="react-i18next">
+
+```ts title="src/i18n/index.ts"
+import i18n from 'i18next';
+import { initReactI18next } from 'react-i18next';
+import HttpBackend from 'i18next-http-backend';
+
+i18n
+  .use(HttpBackend)
+  .use(initReactI18next)
+  .init({
+    fallbackLng: 'en',
+    supportedLngs: ['en', 'de', 'fr'],
+    backend: {
+      loadPath: '/locales/{{lng}}.json',
+    },
+  });
+```
+
+Copy the LangSync-managed files into your public folder during build
+(e.g. via `vite-plugin-static-copy` or a Next.js `public/` symlink):
+
+```bash
+cp src/i18n/*.json public/locales/
+```
+
+</Tab>
+<Tab value="i18next (vanilla)">
+
+```ts title="src/i18n.ts"
+import i18n from 'i18next';
+import en from './i18n/en.json' with { type: 'json' };
+import de from './i18n/de.json' with { type: 'json' };
+
+await i18n.init({
+  fallbackLng: 'en',
+  resources: {
+    en: { translation: en },
+    de: { translation: de },
+  },
+});
+```
+
+</Tab>
+<Tab value="vue-i18next">
+
+```ts title="src/main.ts"
+import { createApp } from 'vue';
+import { createI18n } from 'vue-i18n';
+import en from './i18n/en.json';
+import de from './i18n/de.json';
+
+const i18n = createI18n({
+  legacy: false,
+  locale: 'en',
+  fallbackLocale: 'en',
+  messages: { en, de },
+});
+
+createApp(App).use(i18n).mount('#app');
+```
+
+</Tab>
+</Tabs>
+
+## Suggested LangSync config
+
+```ts title="langsync.config.ts"
+import { defineConfig } from '@mariokreitz/langsync';
+
+export default defineConfig({
+  input: './src/i18n',
+  output: './translations',
+  locales: ['en', 'de', 'fr'],
+  defaultLocale: 'en',
+  framework: 'i18next',
+});
+```
+
+## Recommended workflow
+
+1. Edit `src/i18n/en.json` while developing.
+2. Run `langsync sync` to propagate new keys (as empty strings) to other
+   locales.
+3. Run `langsync validate` in CI to fail PRs that introduce inconsistencies.
+4. Hand off `langsync export excel` to non-technical translators.
+
+<Callout title="i18next interpolation is preserved verbatim">
+  LangSync treats values as opaque strings, so `{{field}}` placeholders,
+  ICU MessageFormat, and HTML tags all round-trip through `sync`,
+  `export excel`, and `import excel` unchanged.
+</Callout>

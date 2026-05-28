@@ -1,6 +1,114 @@
 ---
 title: react-intl
-description: Using LangSync with react-intl.
+description: Using LangSync with react-intl and FormatJS.
 ---
 
-> **Status:** Coming soon.
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
+import { Callout } from 'fumadocs-ui/components/callout';
+
+LangSync detects [`react-intl`](https://formatjs.io/docs/react-intl/) (and
+`@formatjs/intl`) automatically when either is present in your project's
+`package.json`.
+
+## Locale file layout
+
+`react-intl` consumes flat message-id maps. LangSync writes nested JSON by
+default, but `react-intl` resolves dot-notated keys when you pass them via
+`<FormattedMessage id="...">`. Two strategies are common:
+
+<Tabs items={['Nested (recommended)', 'Flat (legacy FormatJS)']}>
+<Tab value="Nested (recommended)">
+
+```json title="src/i18n/en.json"
+{
+  "checkout": {
+    "title": "Checkout",
+    "total": "Total: {amount, number, currency/USD}"
+  }
+}
+```
+
+Reference messages with dotted IDs:
+
+```tsx
+<FormattedMessage id="checkout.title" defaultMessage="Checkout" />
+```
+
+</Tab>
+<Tab value="Flat (legacy FormatJS)">
+
+```json title="src/i18n/en.json"
+{
+  "checkout.title": "Checkout",
+  "checkout.total": "Total: {amount, number, currency/USD}"
+}
+```
+
+Use this when you generate IDs via the FormatJS babel/SWC plugin and want
+files to match the plugin's flat output 1:1.
+
+</Tab>
+</Tabs>
+
+LangSync handles both — flat keys are written as-is, nested keys are
+flattened internally for diffs but written back nested. Pick one and stay
+consistent.
+
+## Suggested LangSync config
+
+```ts title="langsync.config.ts"
+import { defineConfig } from '@mariokreitz/langsync';
+
+export default defineConfig({
+  input: './src/i18n',
+  output: './translations',
+  locales: ['en', 'de', 'fr'],
+  defaultLocale: 'en',
+  framework: 'react-intl',
+});
+```
+
+## Wire react-intl to consume the files
+
+```tsx title="src/main.tsx"
+import { IntlProvider } from 'react-intl';
+import { useEffect, useState } from 'react';
+
+const SUPPORTED = ['en', 'de', 'fr'] as const;
+
+async function loadMessages(locale: string) {
+  return (await import(`./i18n/${locale}.json`)).default;
+}
+
+export function AppRoot({ children }: { children: React.ReactNode }) {
+  const [locale, setLocale] = useState<(typeof SUPPORTED)[number]>('en');
+  const [messages, setMessages] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    void loadMessages(locale).then(setMessages);
+  }, [locale]);
+
+  return (
+    <IntlProvider locale={locale} messages={messages} defaultLocale="en">
+      {children}
+    </IntlProvider>
+  );
+}
+```
+
+## Recommended workflow
+
+1. Add new `FormattedMessage` usages in your components.
+2. Update `src/i18n/en.json` with the new keys (manually or via the
+   FormatJS extract step).
+3. `langsync sync` propagates the new keys to the other locale files as
+   empty placeholders.
+4. `langsync validate --reporter json` in CI fails the PR if anything is out
+   of sync.
+5. `langsync export excel` / `import excel` to hand off bulk translation work.
+
+<Callout title="ICU MessageFormat round-trips losslessly">
+  Values such as `{count, plural, one {# item} other {# items}}` are treated
+  as opaque strings. LangSync never parses, reformats, or escapes them, so
+  every command (sync, export, import) preserves them exactly.
+</Callout>

@@ -3,4 +3,78 @@ title: ngx-translate
 description: Using LangSync with @ngx-translate/core in Angular projects.
 ---
 
-> **Status:** Coming soon.
+import { Callout } from 'fumadocs-ui/components/callout';
+
+LangSync detects [`@ngx-translate/core`](https://github.com/ngx-translate/core)
+or `@ngx-translate/http-loader` automatically when present in your Angular
+project's `package.json`.
+
+## Locale file layout
+
+`ngx-translate` uses nested JSON files served via HTTP. LangSync writes the
+same format.
+
+```json title="src/assets/i18n/en.json"
+{
+  "HOME": {
+    "TITLE": "Welcome",
+    "SUBTITLE": "Get started"
+  }
+}
+```
+
+## Suggested LangSync config
+
+`ngx-translate` typically loads files from `src/assets/i18n/<locale>.json`:
+
+```ts title="langsync.config.ts"
+import { defineConfig } from '@mariokreitz/langsync';
+
+export default defineConfig({
+  input: './src/assets/i18n',
+  output: './translations',
+  locales: ['en', 'de', 'fr'],
+  defaultLocale: 'en',
+  framework: 'ngx-translate',
+});
+```
+
+## Wire ngx-translate to consume the files
+
+```ts title="src/app/app.config.ts"
+import { provideHttpClient } from '@angular/common/http';
+import { provideTranslateService, TranslateLoader } from '@ngx-translate/core';
+import { TranslateHttpLoader } from '@ngx-translate/http-loader';
+import { HttpClient } from '@angular/common/http';
+
+export const appConfig = {
+  providers: [
+    provideHttpClient(),
+    provideTranslateService({
+      defaultLanguage: 'en',
+      loader: {
+        provide: TranslateLoader,
+        useFactory: (http: HttpClient) =>
+          new TranslateHttpLoader(http, './assets/i18n/', '.json'),
+        deps: [HttpClient],
+      },
+    }),
+  ],
+};
+```
+
+## Recommended workflow
+
+1. Edit keys in `src/assets/i18n/en.json` as you build new features.
+2. `langsync sync` keeps the other locales aligned with empty placeholders.
+3. `langsync validate --reporter json` gates pull requests.
+4. `langsync export excel` produces a workbook for translators; `import excel`
+   merges their work back in place.
+
+<Callout title="Angular file hashing">
+  Angular's build pipeline emits hashed filenames for files in
+  `src/assets/`. The hashes are computed at build time from the JSON
+  content — running `langsync sync` or `langsync import excel` updates the
+  content, which updates the hash on the next build automatically. No extra
+  configuration needed.
+</Callout>

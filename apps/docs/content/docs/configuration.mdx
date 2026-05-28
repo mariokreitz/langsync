@@ -1,11 +1,26 @@
 ---
 title: Configuration
-description: Configure LangSync via langsync.config.ts.
+description: Every config option, file format, and resolution rule.
 ---
 
-LangSync is configured through a `langsync.config.ts` file at the root of your project.
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
+import { Callout } from 'fumadocs-ui/components/callout';
 
-## Example
+LangSync configuration lives at the root of your project. The CLI discovers
+it via [cosmiconfig](https://github.com/cosmiconfig/cosmiconfig), so any of
+the following are picked up automatically:
+
+- `langsync.config.ts` (recommended — typed)
+- `langsync.config.js`
+- `langsync.config.mjs`
+- `langsync.config.json`
+- `"langsync"` field in `package.json`
+- `.langsyncrc` / `.langsyncrc.json`
+
+## Recommended: `langsync.config.ts`
+
+The TypeScript file gives you autocomplete and validation in your editor
+via the `defineConfig` helper.
 
 ```ts title="langsync.config.ts"
 import { defineConfig } from '@mariokreitz/langsync';
@@ -13,20 +28,146 @@ import { defineConfig } from '@mariokreitz/langsync';
 export default defineConfig({
   input: './src/i18n',
   output: './translations',
-  locales: ['en', 'de'],
+  locales: ['en', 'de', 'fr'],
   defaultLocale: 'en',
   framework: 'i18next',
+  excel: {
+    file: 'translations.xlsx',
+    sheetName: 'Translations',
+  },
 });
 ```
 
-## Options
+## Alternative formats
 
-| Option            | Type       | Required | Description                                      |
-| ----------------- | ---------- | -------- | ------------------------------------------------ |
-| `input`           | `string`   | yes      | Path to the source i18n directory.               |
-| `output`          | `string`   | yes      | Path to the output/translations directory.       |
-| `locales`         | `string[]` | yes      | List of supported locales.                       |
-| `defaultLocale`   | `string`   | no       | Reference locale used for validation.            |
-| `framework`       | `string`   | no       | One of `i18next`, `ngx-translate`, `react-intl`. |
-| `excel.file`      | `string`   | no       | Excel filename (default: `translations.xlsx`).   |
-| `excel.sheetName` | `string`   | no       | Worksheet name (default: `Translations`).        |
+<Tabs items={['JavaScript', 'ESM', 'JSON', 'package.json']}>
+<Tab value="JavaScript">
+
+```js title="langsync.config.js"
+/** @type {import('@mariokreitz/langsync').LangSyncConfig} */
+module.exports = {
+  input: './src/i18n',
+  output: './translations',
+  locales: ['en', 'de'],
+  defaultLocale: 'en',
+};
+```
+
+</Tab>
+<Tab value="ESM">
+
+```js title="langsync.config.mjs"
+import { defineConfig } from '@mariokreitz/langsync';
+
+export default defineConfig({
+  input: './src/i18n',
+  output: './translations',
+  locales: ['en', 'de'],
+  defaultLocale: 'en',
+});
+```
+
+</Tab>
+<Tab value="JSON">
+
+```json title="langsync.config.json"
+{
+  "input": "./src/i18n",
+  "output": "./translations",
+  "locales": ["en", "de"],
+  "defaultLocale": "en"
+}
+```
+
+</Tab>
+<Tab value="package.json">
+
+```json title="package.json"
+{
+  "name": "my-app",
+  "langsync": {
+    "input": "./src/i18n",
+    "output": "./translations",
+    "locales": ["en", "de"],
+    "defaultLocale": "en"
+  }
+}
+```
+
+</Tab>
+</Tabs>
+
+## Options reference
+
+### Top-level
+
+| Option          | Type       | Required | Default                  | Description                                          |
+| --------------- | ---------- | -------- | ------------------------ | ---------------------------------------------------- |
+| `input`         | `string`   | yes      | —                        | Directory containing per-locale JSON files.          |
+| `output`        | `string`   | yes      | —                        | Output directory for Excel exports and reports.      |
+| `locales`       | `string[]` | yes      | —                        | List of locale codes you support.                    |
+| `defaultLocale` | `string`   | no       | First entry in `locales` | Reference locale used by `validate` and `sync`.      |
+| `framework`     | `string`   | no       | `none`                   | One of `i18next`, `ngx-translate`, `react-intl`, `none`. |
+| `excel`         | `object`   | no       | see below                | Excel I/O settings.                                  |
+
+### `excel`
+
+| Option      | Type     | Default            | Description                                  |
+| ----------- | -------- | ------------------ | -------------------------------------------- |
+| `file`      | `string` | `translations.xlsx`| Path (relative to project root) of the workbook. |
+| `sheetName` | `string` | `Translations`     | Worksheet name inside the workbook.          |
+
+## Locale file layout
+
+LangSync expects one JSON file per locale at `<input>/<locale>.json`:
+
+```text
+src/i18n/
+  ├ en.json   ← reference (defaultLocale)
+  ├ de.json
+  └ fr.json
+```
+
+Each file is a free-form nested JSON tree. Keys are dot-notated internally
+(`greeting.hello`) so deeply nested structures are supported.
+
+```json title="src/i18n/en.json"
+{
+  "greeting": {
+    "hello": "Hello",
+    "bye": "Goodbye"
+  },
+  "app": { "name": "My App" }
+}
+```
+
+<Callout title="Missing files are tolerated">
+  If a configured locale file doesn't exist on disk yet, LangSync treats it
+  as an empty tree and reports every reference key as `missing` (instead of
+  crashing). Run `langsync sync` to scaffold it with empty placeholders.
+</Callout>
+
+## Resolution order
+
+When multiple config files exist, cosmiconfig's discovery order applies
+(top wins):
+
+1. `package.json#langsync`
+2. `.langsyncrc` / `.langsyncrc.json`
+3. `langsync.config.ts`
+4. `langsync.config.mjs`
+5. `langsync.config.js`
+6. `langsync.config.json`
+
+Stick to one. The first match wins; the rest are ignored.
+
+## Validation
+
+The config is validated with [zod](https://zod.dev) at load time. Invalid
+configs fail fast with a clear error pointing to the field at fault:
+
+```text
+Error: Invalid LangSync configuration
+  - locales: must contain at least one locale
+  - defaultLocale: must be one of the configured locales
+```

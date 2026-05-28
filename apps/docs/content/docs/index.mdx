@@ -1,22 +1,59 @@
 ---
-title: Overview
-description: Welcome to LangSync — modern localization workflow tooling for TypeScript applications.
+title: Introduction
+description: Modern localization workflow tooling for TypeScript applications.
 ---
 
-LangSync helps developer teams synchronize translations, manage i18n files,
-collaborate with translators, and validate localization consistency — without chaos.
+LangSync is a typed, framework-agnostic command-line tool that keeps your
+translation files consistent across every locale and every collaborator —
+without hand-edited JSON, mismatched keys, or fragile Excel hand-offs.
 
-## What LangSync does
+It runs locally, runs in CI, and gives non-technical translators a
+spreadsheet round-trip when they need one.
 
-- **Sync translations** across all configured locales.
-- **Excel I/O** for non-technical translators (bidirectional).
-- **Validate** locale consistency, structure, and missing keys.
-- **Framework integrations** for i18next, ngx-translate, and react-intl.
-- **Beautiful terminal UX** with interactive prompts and progress indicators.
+## Why LangSync
 
-## Quick links
+- **Typed configuration.** Author `langsync.config.ts` with full IntelliSense
+  via the `defineConfig` helper.
+- **Strict validation.** Reports missing, extra, and empty keys with proper
+  exit codes — drop it into any PR check.
+- **Lossless Excel I/O.** Export every locale into one workbook, hand it to a
+  translator, import their work back. Keys are preserved, structure is
+  preserved.
+- **Framework integrations.** Auto-detects [`i18next`](./integrations/i18next),
+  [`ngx-translate`](./integrations/ngx-translate), and
+  [`react-intl`](./integrations/react-intl) from your `package.json`.
+- **Beautiful terminal UX.** Interactive prompts, spinners, and structured
+  output that's machine-readable when needed (`--reporter json`).
+- **CI-first design.** Every command exits with the right code for fail-fast
+  pipelines.
 
-- [Getting Started](./getting-started)
-- [Installation](./installation)
-- [Configuration](./configuration)
-- [CLI reference](./cli/init)
+## How it fits in your stack
+
+```text
+┌──────────────────┐         ┌──────────────────┐         ┌──────────────────┐
+│  src/i18n/       │ ◄────► │   LangSync CLI   │ ◄────► │  translations.   │
+│  ├ en.json       │         │  validate / sync │         │  xlsx (handoff)  │
+│  ├ de.json       │         │  export / import │         └──────────────────┘
+│  └ fr.json       │         └──────────────────┘
+└──────────────────┘                    ▲
+                                        │
+                            ┌──────────────────┐
+                            │ langsync.config  │
+                            │ .ts (typed)      │
+                            └──────────────────┘
+```
+
+You keep authoring locale JSON files exactly how your framework expects them.
+LangSync sits on top, ensures consistency, and bridges to non-technical
+collaborators when needed.
+
+## Where to go next
+
+- [Getting Started](./getting-started) — 5-minute walkthrough from zero to
+  validated locales.
+- [Installation](./installation) — install with pnpm, npm, or yarn.
+- [Configuration](./configuration) — every option, every file format.
+- [CLI Reference](./cli/init) — `init`, `validate`, `sync`, `find-missing`,
+  `export excel`, `import excel`.
+- [Integrations](./integrations/i18next) — recipes for `i18next`,
+  `ngx-translate`, and `react-intl`.

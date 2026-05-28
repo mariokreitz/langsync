@@ -1,0 +1,131 @@
+---
+title: CI Integration
+description: Fail pull requests when locales drift. Recipes for GitHub Actions, GitLab CI, and CircleCI.
+---
+
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
+import { Callout } from 'fumadocs-ui/components/callout';
+
+`langsync validate` (and `find-missing`) exit with code `1` when a locale
+has missing or extra keys, so they drop directly into any CI system as a
+quality gate.
+
+Pair with `--reporter json` if you want machine-readable output for
+custom annotations or PR comments.
+
+## GitHub Actions
+
+```yaml title=".github/workflows/i18n.yml"
+name: i18n
+
+on:
+  pull_request:
+    paths:
+      - 'src/i18n/**'
+      - 'langsync.config.*'
+      - '.github/workflows/i18n.yml'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Validate translations
+        run: pnpm langsync validate --reporter json
+```
+
+<Callout title="Why Corepack?">
+  Corepack reads the `packageManager` field from your `package.json` and
+  provisions the exact pnpm/yarn version. It's bundled with Node 22, so no
+  third-party setup action is required.
+</Callout>
+
+## GitLab CI
+
+```yaml title=".gitlab-ci.yml"
+i18n:validate:
+  image: node:22-alpine
+  before_script:
+    - corepack enable
+    - pnpm install --frozen-lockfile
+  script:
+    - pnpm langsync validate --reporter json
+  rules:
+    - changes:
+        - 'src/i18n/**/*'
+        - 'langsync.config.*'
+```
+
+## CircleCI
+
+```yaml title=".circleci/config.yml"
+version: 2.1
+
+jobs:
+  i18n-validate:
+    docker:
+      - image: cimg/node:22.0
+    steps:
+      - checkout
+      - run: corepack enable
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm langsync validate --reporter json
+
+workflows:
+  pr-checks:
+    jobs:
+      - i18n-validate
+```
+
+## Optional: post a PR comment
+
+The JSON reporter's output is small enough to render inline in a PR
+comment. Combine `langsync validate --reporter json` with
+[`actions/github-script`](https://github.com/actions/github-script):
+
+```yaml
+- name: Run validate
+  id: validate
+  continue-on-error: true
+  run: |
+    REPORT=$(pnpm langsync validate --reporter json)
+    echo "report<<EOF" >> $GITHUB_OUTPUT
+    echo "$REPORT" >> $GITHUB_OUTPUT
+    echo "EOF" >> $GITHUB_OUTPUT
+
+- uses: actions/github-script@v7
+  if: steps.validate.outcome == 'failure'
+  with:
+    script: |
+      const body = '```json\n' + ${{ toJSON(steps.validate.outputs.report) }} + '\n```';
+      github.rest.issues.createComment({
+        ...context.repo,
+        issue_number: context.issue.number,
+        body: `**LangSync validation failed**\n\n${body}`,
+      });
+```
+
+## Exit codes recap
+
+| Command         | Exit 0                       | Exit 1                                          |
+| --------------- | ---------------------------- | ----------------------------------------------- |
+| `validate`      | No `missing` or `extra` keys | Any `missing` / `extra` key (or runtime error)  |
+| `find-missing`  | No missing keys              | At least one locale missing keys                |
+| `sync`          | Always (use `--dry-run` to preview)                                              ||
+| `export excel`  | Always                                                                            ||
+| `import excel`  | Always                                                                            ||
+
+Empty values (`""`) are reported as **warnings** by `validate` — they do
+not change the exit code.
+

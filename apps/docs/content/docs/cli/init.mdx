@@ -3,17 +3,110 @@ title: langsync init
 description: Initialize a new LangSync configuration in the current project.
 ---
 
-Scaffolds a typed `langsync.config.ts` (or `.json` with `--json`) and creates
-the i18n directory structure based on your answers.
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
+import { Callout } from 'fumadocs-ui/components/callout';
+
+`langsync init` scaffolds a typed `langsync.config.ts` (or `.json` with
+`--json`) and creates per-locale JSON stubs in your input directory.
+
+## Usage
+
+<Tabs items={['pnpm', 'npm', 'yarn']}>
+<Tab value="pnpm">
+
+```bash
+pnpm langsync init [--force] [--json] [--yes]
+```
+
+</Tab>
+<Tab value="npm">
+
+```bash
+npx langsync init [--force] [--json] [--yes]
+```
+
+</Tab>
+<Tab value="yarn">
+
+```bash
+yarn langsync init [--force] [--json] [--yes]
+```
+
+</Tab>
+</Tabs>
+
+## What it does
+
+1. Inspects `package.json` for known i18n framework dependencies
+   (`i18next`, `react-i18next`, `vue-i18next`, `@ngx-translate/core`,
+   `@ngx-translate/http-loader`, `react-intl`, `@formatjs/intl`) and
+   pre-selects the detected framework.
+2. Asks for **input directory**, **output directory**, **locales**, and
+   **default locale**.
+3. Writes a typed `langsync.config.ts` (or `langsync.config.json` with
+   `--json`) at the project root.
+4. Scaffolds empty `<locale>.json` files inside the input directory for
+   each configured locale (existing files are preserved).
+
+## Flags
+
+| Flag      | Default | Description                                                            |
+| --------- | ------- | ---------------------------------------------------------------------- |
+| `--force` | `false` | Overwrite an existing `langsync.config.*` file without asking.         |
+| `--json`  | `false` | Emit `langsync.config.json` instead of `.ts`.                          |
+| `--yes`   | `false` | Skip every prompt; use sensible defaults (`./src/i18n`, `[en]`, etc.). |
+
+## Examples
+
+### First-time setup (interactive)
 
 ```bash
 pnpm langsync init
 ```
 
-## Flags
+### Non-interactive (CI / scripted)
 
-| Flag      | Description                                       |
-| --------- | ------------------------------------------------- |
-| `--force` | Overwrite an existing config file without asking. |
-| `--json`  | Emit `langsync.config.json` instead of `.ts`.     |
-| `--yes`   | Accept all defaults; skip prompts.                |
+```bash
+pnpm langsync init --yes
+```
+
+Produces a config with:
+
+- `input: './src/i18n'`
+- `output: './translations'`
+- `locales: ['en']`
+- `defaultLocale: 'en'`
+- Framework auto-detected from `package.json` (or `none`)
+
+### Re-initialize an existing project
+
+```bash
+pnpm langsync init --force
+```
+
+### Emit JSON instead of TypeScript
+
+```bash
+pnpm langsync init --json
+```
+
+<Callout title="Existing locale files are never touched">
+  `init` only creates `<locale>.json` for locales that don't already exist
+  on disk. Your existing translations are safe.
+</Callout>
+
+## Generated config
+
+```ts title="langsync.config.ts"
+import { defineConfig } from '@mariokreitz/langsync';
+
+export default defineConfig({
+  input: './src/i18n',
+  output: './translations',
+  locales: ['en', 'de'],
+  defaultLocale: 'en',
+  framework: 'i18next',
+});
+```
+
+See [Configuration](../configuration) for every supported option.
