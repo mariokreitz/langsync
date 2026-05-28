@@ -1,13 +1,8 @@
 name: Release
 
 on:
-  # Fire ONLY on intentional release events:
-  #   - a semver tag is pushed (the canonical "release" signal)
-  #   - someone clicks "Run workflow" in the Actions tab
-  # This prevents every commit on main from re-attempting a publish.
-  push:
-    tags:
-      - 'v*.*.*'
+  release:
+    types: [published]
   workflow_dispatch:
     inputs:
       dry-run:
@@ -51,8 +46,6 @@ jobs:
         run: pnpm build
 
       - name: Verify npm authentication
-        # Fails fast with a clear message if NPM_TOKEN is invalid, expired,
-        # or read-only — instead of letting npm return a misleading 404.
         run: npm whoami
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -68,6 +61,3 @@ jobs:
         run: pnpm --filter @mariokreitz/langsync publish --no-git-checks --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-          # Re-enable provenance once first publish has succeeded and the
-          # NPM_TOKEN supports signed provenance statements.
-          # NPM_CONFIG_PROVENANCE: true
