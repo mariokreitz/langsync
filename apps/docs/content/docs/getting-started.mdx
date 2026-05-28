@@ -1,29 +1,260 @@
 ---
 title: Getting Started
-description: Install LangSync and scaffold your first translation workflow in under two minutes.
+description: From zero to validated locales in under five minutes.
 ---
 
-## 1. Install
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Step, Steps } from 'fumadocs-ui/components/steps';
+
+This walkthrough takes you from a fresh project to a fully working
+LangSync setup that validates and syncs your translations.
+
+## Prerequisites
+
+- A TypeScript or JavaScript project with **Node.js 22+**.
+- A package manager (**pnpm**, **npm**, or **yarn**).
+
+<Steps>
+<Step>
+
+### Install LangSync
+
+Add the CLI as a development dependency.
+
+<Tabs items={['pnpm', 'npm', 'yarn']}>
+<Tab value="pnpm">
 
 ```bash
 pnpm add -D @mariokreitz/langsync
 ```
 
-## 2. Initialize
+</Tab>
+<Tab value="npm">
+
+```bash
+npm install --save-dev @mariokreitz/langsync
+```
+
+</Tab>
+<Tab value="yarn">
+
+```bash
+yarn add --dev @mariokreitz/langsync
+```
+
+</Tab>
+</Tabs>
+
+</Step>
+<Step>
+
+### Initialize your project
+
+Run the interactive setup. LangSync inspects your `package.json` to
+auto-detect your i18n framework, asks a few short questions, then writes a
+typed `langsync.config.ts` and scaffolds empty locale stubs.
+
+<Tabs items={['pnpm', 'npm', 'yarn']}>
+<Tab value="pnpm">
 
 ```bash
 pnpm langsync init
 ```
 
-This creates a typed `langsync.config.ts` and scaffolds your locale files.
+</Tab>
+<Tab value="npm">
 
-## 3. Validate
+```bash
+npx langsync init
+```
+
+</Tab>
+<Tab value="yarn">
+
+```bash
+yarn langsync init
+```
+
+</Tab>
+</Tabs>
+
+You'll see something like:
+
+```text
+  LangSync  v0.1.1
+  Modern localization workflow tooling.
+
+- Detecting i18n framework…
+✔ Detected: i18next
+? Input directory (where locale files live)  › ./src/i18n
+? Output directory (Excel exports, reports)   › ./translations
+? Comma-separated locales                     › en, de, fr
+? Default locale                              › en
+
+✔ Created langsync.config.ts
+✔ Scaffolded src/i18n/en.json
+✔ Scaffolded src/i18n/de.json
+✔ Scaffolded src/i18n/fr.json
+```
+
+<Callout type="info">
+  Pass `--yes` to skip every prompt and accept defaults, or `--force` to
+  overwrite an existing config.
+</Callout>
+
+</Step>
+<Step>
+
+### Add your translations
+
+Populate the reference locale (`src/i18n/en.json`) with the source-of-truth
+keys for your app:
+
+```json title="src/i18n/en.json"
+{
+  "greeting": {
+    "hello": "Hello",
+    "bye": "Goodbye"
+  },
+  "app": {
+    "name": "My App"
+  }
+}
+```
+
+</Step>
+<Step>
+
+### Validate
+
+Check every configured locale against the reference. LangSync reports
+missing keys, extra keys, and empty values, then exits non-zero on errors —
+perfect for CI.
+
+<Tabs items={['pnpm', 'npm', 'yarn']}>
+<Tab value="pnpm">
 
 ```bash
 pnpm langsync validate
 ```
 
-## Next steps
+</Tab>
+<Tab value="npm">
 
-- Read the [Configuration](./configuration) reference
-- Explore the [CLI commands](./cli/init)
+```bash
+npx langsync validate
+```
+
+</Tab>
+<Tab value="yarn">
+
+```bash
+yarn langsync validate
+```
+
+</Tab>
+</Tabs>
+
+</Step>
+<Step>
+
+### Sync missing keys
+
+Propagate every key from the reference locale into the other locales as
+empty placeholders, so translators know what's outstanding:
+
+<Tabs items={['pnpm', 'npm', 'yarn']}>
+<Tab value="pnpm">
+
+```bash
+pnpm langsync sync
+```
+
+</Tab>
+<Tab value="npm">
+
+```bash
+npx langsync sync
+```
+
+</Tab>
+<Tab value="yarn">
+
+```bash
+yarn langsync sync
+```
+
+</Tab>
+</Tabs>
+
+Existing translations are preserved. Use `--dry-run` to preview without
+writing.
+
+</Step>
+<Step>
+
+### Hand off to translators (optional)
+
+Export every locale into a single Excel workbook a non-technical
+translator can edit:
+
+<Tabs items={['pnpm', 'npm', 'yarn']}>
+<Tab value="pnpm">
+
+```bash
+pnpm langsync export excel
+```
+
+</Tab>
+<Tab value="npm">
+
+```bash
+npx langsync export excel
+```
+
+</Tab>
+<Tab value="yarn">
+
+```bash
+yarn langsync export excel
+```
+
+</Tab>
+</Tabs>
+
+When the workbook comes back:
+
+<Tabs items={['pnpm', 'npm', 'yarn']}>
+<Tab value="pnpm">
+
+```bash
+pnpm langsync import excel
+```
+
+</Tab>
+<Tab value="npm">
+
+```bash
+npx langsync import excel
+```
+
+</Tab>
+<Tab value="yarn">
+
+```bash
+yarn langsync import excel
+```
+
+</Tab>
+</Tabs>
+
+</Step>
+</Steps>
+
+## What's next
+
+- Wire `langsync validate --reporter json` into your CI — see the
+  [validate command reference](./cli/validate) for the exact recipe.
+- Tune your setup with the full [Configuration](./configuration) reference.
+- Read the [Integrations](./integrations/i18next) page for your framework.
