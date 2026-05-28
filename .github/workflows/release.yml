@@ -52,4 +52,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NPM_CONFIG_PROVENANCE: true
+          # Provenance disabled until the first successful publish. It requires
+          # additional token capabilities and can mask underlying auth errors
+          # with a generic 404. Re-enable in a follow-up once v0.1.0 is on npm
+          # and your NPM_TOKEN supports signed provenance statements.
+          # NPM_CONFIG_PROVENANCE: true
