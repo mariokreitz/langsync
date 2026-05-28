@@ -10,7 +10,10 @@ COPY packages/core/package.json ./packages/core/
 COPY packages/excel-engine/package.json ./packages/excel-engine/
 COPY packages/shared/package.json ./packages/shared/
 
-RUN pnpm install --frozen-lockfile --filter @langsync/docs...
+# Install dependencies only. The docs package has a postinstall script that
+# runs `fumadocs-mdx`, which requires source.config.ts and content/docs/**.
+# Those files are copied in the builder stage, so scripts must be deferred.
+RUN pnpm install --frozen-lockfile --filter @langsync/docs... --ignore-scripts
 
 FROM node:22-alpine AS builder
 RUN corepack enable && corepack prepare pnpm@11.4.0 --activate
@@ -21,7 +24,7 @@ COPY --from=deps /repo/apps/docs/node_modules ./apps/docs/node_modules
 COPY . .
 
 ENV NEXT_TELEMETRY_DISABLED=1
-RUN pnpm --filter @langsync/docs build
+RUN pnpm --filter @langsync/docs exec fumadocs-mdx && pnpm --filter @langsync/docs build
 
 FROM node:22-alpine AS runner
 WORKDIR /app

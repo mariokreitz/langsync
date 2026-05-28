@@ -1,0 +1,40 @@
+# Git / metadata
+.git
+.gitignore
+.gitattributes
+.github
+
+# Dependencies
+node_modules
+**/node_modules
+.pnpm-store
+
+# Build outputs and caches
+.turbo
+**/.turbo
+.next
+**/.next
+.source
+**/.source
+dist
+**/dist
+build
+**/build
+coverage
+**/coverage
+*.tsbuildinfo
+
+# Local/editor files
+.idea
+.vscode
+.DS_Store
+*.log
+
+# Env files
+.env
+.env.*
+!.env.example
+
+# Docker records / local artifacts
+*.dockerbuild
+

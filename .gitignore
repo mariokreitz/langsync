@@ -36,5 +36,6 @@ Thumbs.db
 
 # Next.js (docs app)
 .next/
+.source/
 out/
 
