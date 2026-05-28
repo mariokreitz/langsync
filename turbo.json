@@ -12,6 +12,7 @@
       "persistent": true
     },
     "lint": {
+      "dependsOn": ["^build"],
       "inputs": ["src/**", "*.config.*", "package.json"],
       "outputs": []
     },
