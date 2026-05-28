@@ -1,8 +1,19 @@
 name: Release
 
 on:
+  # Fire ONLY on intentional release events:
+  #   - a semver tag is pushed (the canonical "release" signal)
+  #   - someone clicks "Run workflow" in the Actions tab
+  # This prevents every commit on main from re-attempting a publish.
   push:
-    branches: [main]
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: 'Pack without publishing (dry-run)'
+        type: boolean
+        default: false
 
 concurrency:
   group: release-${{ github.ref }}
@@ -10,11 +21,10 @@ concurrency:
 
 jobs:
   release:
-    name: Release
+    name: Publish to npm
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      pull-requests: write
       id-token: write
     timeout-minutes: 20
 
@@ -25,8 +35,6 @@ jobs:
           fetch-depth: 0
 
       - name: Enable Corepack
-        # Activates the pnpm version pinned in package.json#packageManager.
-        # Avoids pnpm/action-setup self-installer instability on current runners.
         run: corepack enable
 
       - name: Setup Node.js
@@ -42,18 +50,24 @@ jobs:
       - name: Build packages
         run: pnpm build
 
-      - name: Create Release PR or publish
-        uses: changesets/action@v1
-        with:
-          publish: pnpm release
-          version: pnpm version
-          commit: 'chore(release): version packages'
-          title: 'chore(release): version packages'
+      - name: Verify npm authentication
+        # Fails fast with a clear message if NPM_TOKEN is invalid, expired,
+        # or read-only — instead of letting npm return a misleading 404.
+        run: npm whoami
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-          # Provenance disabled until the first successful publish. It requires
-          # additional token capabilities and can mask underlying auth errors
-          # with a generic 404. Re-enable in a follow-up once v0.1.0 is on npm
-          # and your NPM_TOKEN supports signed provenance statements.
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish (dry-run)
+        if: ${{ inputs.dry-run == true }}
+        run: pnpm --filter langsync-cli publish --dry-run --no-git-checks --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish
+        if: ${{ inputs.dry-run != true }}
+        run: pnpm --filter langsync-cli publish --no-git-checks --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          # Re-enable provenance once first publish has succeeded and the
+          # NPM_TOKEN supports signed provenance statements.
           # NPM_CONFIG_PROVENANCE: true
