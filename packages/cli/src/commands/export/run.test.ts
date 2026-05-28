@@ -82,4 +82,3 @@ describe('runExportExcel', () => {
     expect(result.file).toBe('/p/custom.xlsx');
   });
 });
-

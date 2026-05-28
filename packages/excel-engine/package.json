@@ -2,6 +2,8 @@
   "name": "@langsync/excel-engine",
   "version": "0.0.0",
   "description": "Excel (xlsx) import/export engine for LangSync. MIT-licensed via exceljs.",
+  "license": "MIT",
+  "author": "Mario Kreitz",
   "type": "module",
   "private": true,
   "main": "./dist/index.js",

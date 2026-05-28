@@ -82,4 +82,3 @@ describe('runSync', () => {
     await expect(runSync({ cwd: '/p' })).rejects.toThrow(/reference locale/i);
   });
 });
-

@@ -51,4 +51,3 @@ export async function runSync(options: RunSyncOptions): Promise<RunSyncResult> {
 
   return { referenceLocale, written, planned };
 }
-

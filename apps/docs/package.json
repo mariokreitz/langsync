@@ -2,6 +2,8 @@
   "name": "@langsync/docs",
   "version": "0.0.0",
   "private": true,
+  "license": "MIT",
+  "author": "Mario Kreitz",
   "type": "module",
   "engines": {
     "node": ">=22"

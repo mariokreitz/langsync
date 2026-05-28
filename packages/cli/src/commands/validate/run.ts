@@ -42,4 +42,3 @@ export async function runValidate(options: RunValidateOptions): Promise<RunValid
     exitCode: hasErrors ? 1 : 0,
   };
 }
-

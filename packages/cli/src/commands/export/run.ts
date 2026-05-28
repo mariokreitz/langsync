@@ -49,4 +49,3 @@ export async function runExportExcel(
 
   return { file, sheetName, locales: files.map((f) => f.locale) };
 }
-

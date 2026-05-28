@@ -85,4 +85,3 @@ describe('runValidate', () => {
     expect(result.issues).toContainEqual({ type: 'missing', locale: 'en', key: 'hi' });
   });
 });
-

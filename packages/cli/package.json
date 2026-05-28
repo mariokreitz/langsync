@@ -14,6 +14,15 @@
   ],
   "license": "MIT",
   "author": "Mario Kreitz",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mariokreitz/langsync.git",
+    "directory": "packages/cli"
+  },
+  "homepage": "https://github.com/mariokreitz/langsync#readme",
+  "bugs": {
+    "url": "https://github.com/mariokreitz/langsync/issues"
+  },
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",

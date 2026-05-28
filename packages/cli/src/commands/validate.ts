@@ -26,9 +26,7 @@ export function registerValidateCommand(program: Command): void {
             for (const issue of issues) {
               byType[issue.type]++;
               const colored =
-                issue.type === 'empty'
-                  ? chalk.yellow(issue.type)
-                  : chalk.red(issue.type);
+                issue.type === 'empty' ? chalk.yellow(issue.type) : chalk.red(issue.type);
               logger.info(`${colored}  ${chalk.cyan(issue.locale)}  ${issue.key}`);
             }
             console.log();

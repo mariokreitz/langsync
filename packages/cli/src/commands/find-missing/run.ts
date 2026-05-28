@@ -30,4 +30,3 @@ export async function runFindMissing(
   const exitCode: 0 | 1 = Object.keys(missingByLocale).length === 0 ? 0 : 1;
   return { referenceLocale, missingByLocale, exitCode };
 }
-

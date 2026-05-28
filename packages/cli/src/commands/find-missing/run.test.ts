@@ -51,4 +51,3 @@ describe('runFindMissing', () => {
     expect(result.exitCode).toBe(0);
   });
 });
-

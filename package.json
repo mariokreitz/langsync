@@ -3,6 +3,16 @@
   "version": "0.0.0",
   "private": true,
   "description": "Modern localization workflow tooling for TypeScript applications.",
+  "license": "MIT",
+  "author": "Mario Kreitz",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mariokreitz/langsync.git"
+  },
+  "homepage": "https://github.com/mariokreitz/langsync#readme",
+  "bugs": {
+    "url": "https://github.com/mariokreitz/langsync/issues"
+  },
   "type": "module",
   "packageManager": "pnpm@11.4.0",
   "engines": {

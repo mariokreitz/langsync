@@ -79,4 +79,3 @@ describe('runImportExcel', () => {
     expect(result.skipped).toEqual(['jp']);
   });
 });
-
