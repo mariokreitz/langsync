@@ -1,0 +1,32 @@
+---
+title: Configuration
+description: Configure LangSync via langsync.config.ts.
+---
+
+LangSync is configured through a `langsync.config.ts` file at the root of your project.
+
+## Example
+
+```ts title="langsync.config.ts"
+import { defineConfig } from 'langsync';
+
+export default defineConfig({
+  input: './src/i18n',
+  output: './translations',
+  locales: ['en', 'de'],
+  defaultLocale: 'en',
+  framework: 'i18next',
+});
+```
+
+## Options
+
+| Option            | Type       | Required | Description                                      |
+| ----------------- | ---------- | -------- | ------------------------------------------------ |
+| `input`           | `string`   | yes      | Path to the source i18n directory.               |
+| `output`          | `string`   | yes      | Path to the output/translations directory.       |
+| `locales`         | `string[]` | yes      | List of supported locales.                       |
+| `defaultLocale`   | `string`   | no       | Reference locale used for validation.            |
+| `framework`       | `string`   | no       | One of `i18next`, `ngx-translate`, `react-intl`. |
+| `excel.file`      | `string`   | no       | Excel filename (default: `translations.xlsx`).   |
+| `excel.sheetName` | `string`   | no       | Worksheet name (default: `Translations`).        |

@@ -1,0 +1,13 @@
+{
+  "title": "Documentation",
+  "pages": [
+    "index",
+    "getting-started",
+    "installation",
+    "configuration",
+    "---CLI---",
+    "...cli",
+    "---Integrations---",
+    "...integrations"
+  ]
+}

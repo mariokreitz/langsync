@@ -1,0 +1,36 @@
+{
+  "name": "@langsync/excel-engine",
+  "version": "0.0.0",
+  "description": "Excel (xlsx) import/export engine for LangSync. MIT-licensed via exceljs.",
+  "type": "module",
+  "private": true,
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "lint": "eslint src",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests",
+    "clean": "rm -rf dist .turbo"
+  },
+  "dependencies": {
+    "@langsync/shared": "workspace:*",
+    "@langsync/core": "workspace:*",
+    "exceljs": "catalog:"
+  }
+}

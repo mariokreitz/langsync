@@ -1,0 +1,16 @@
+# Normalize line endings for all text files.
+* text=auto eol=lf
+
+# Binary files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.xlsx binary
+
+# Lockfiles — keep as generated, mark as such for diffs
+pnpm-lock.yaml linguist-generated=true -diff
+

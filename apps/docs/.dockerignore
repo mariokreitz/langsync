@@ -1,0 +1,13 @@
+**/node_modules
+**/.next
+**/.turbo
+**/dist
+**/coverage
+**/.git
+**/.github
+**/.vscode
+**/.idea
+**/.DS_Store
+**/*.log
+**/.env*
+!**/.env.example

@@ -1,0 +1,19 @@
+---
+title: langsync init
+description: Initialize a new LangSync configuration in the current project.
+---
+
+Scaffolds a typed `langsync.config.ts` (or `.json` with `--json`) and creates
+the i18n directory structure based on your answers.
+
+```bash
+pnpm langsync init
+```
+
+## Flags
+
+| Flag      | Description                                       |
+| --------- | ------------------------------------------------- |
+| `--force` | Overwrite an existing config file without asking. |
+| `--json`  | Emit `langsync.config.json` instead of `.ts`.     |
+| `--yes`   | Accept all defaults; skip prompts.                |

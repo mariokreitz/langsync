@@ -1,0 +1,28 @@
+packages:
+  - 'packages/*'
+  - 'apps/*'
+
+# Trusted build scripts (esbuild + sharp/unrs-resolver compile native binaries).
+onlyBuiltDependencies:
+  - esbuild
+  - sharp
+  - unrs-resolver
+
+allowBuilds:
+  esbuild: true
+  sharp: true
+  unrs-resolver: true
+
+# Shared dependency versions across the monorepo to prevent drift.
+catalog:
+  chalk: ^5.3.0
+  commander: ^12.1.0
+  ora: ^8.1.1
+  prompts: ^2.4.2
+  listr2: ^8.2.5
+  exceljs: ^4.4.0
+  zod: ^3.24.1
+  cosmiconfig: ^9.0.0
+  vitest: ^2.1.8
+  tsup: ^8.3.5
+  typescript: ^5.7.2

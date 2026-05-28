@@ -1,0 +1,4 @@
+{
+  "title": "Integrations",
+  "pages": ["i18next", "ngx-translate", "react-intl"]
+}
