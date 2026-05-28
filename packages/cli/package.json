@@ -1,6 +1,6 @@
 {
-  "name": "langsync",
-  "version": "0.0.0",
+  "name": "@mariokreitz/langsync",
+  "version": "0.1.0",
   "description": "Modern localization workflow tooling for TypeScript applications.",
   "keywords": [
     "i18n",
@@ -43,6 +43,9 @@
   ],
   "engines": {
     "node": ">=22"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "scripts": {
     "build": "tsup",

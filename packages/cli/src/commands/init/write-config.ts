@@ -44,7 +44,7 @@ function renderTsConfig(answers: InitAnswers): string {
   const frameworkLine =
     answers.framework === 'none' ? '' : `  framework: '${answers.framework}',\n`;
   const localesArr = answers.locales.map((l) => `'${l}'`).join(', ');
-  return `import { defineConfig } from 'langsync';
+  return `import { defineConfig } from '@mariokreitz/langsync';
 
 export default defineConfig({
   input: '${answers.input}',

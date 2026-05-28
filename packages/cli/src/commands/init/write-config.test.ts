@@ -41,7 +41,7 @@ describe('writeConfig', () => {
     ]);
 
     const content = vol.readFileSync('/project/langsync.config.ts', 'utf-8') as string;
-    expect(content).toContain("import { defineConfig } from 'langsync';");
+    expect(content).toContain("import { defineConfig } from '@mariokreitz/langsync';");
     expect(content).toContain("locales: ['en', 'de']");
     expect(content).toContain("framework: 'i18next'");
     expect(vol.readFileSync('/project/src/i18n/en.json', 'utf-8')).toBe('{}\n');

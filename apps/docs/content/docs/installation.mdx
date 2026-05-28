@@ -11,11 +11,20 @@ description: How to install LangSync in your project.
 ## Install
 
 ```bash
-pnpm add -D langsync
+pnpm add -D @mariokreitz/langsync
+# or: npm install -D @mariokreitz/langsync
+# or: yarn add -D @mariokreitz/langsync
 ```
 
 ## One-off usage with `npx`
 
 ```bash
-npx langsync init
+npx @mariokreitz/langsync init
+```
+
+The installed binary is also exposed as `langsync` once the package is in
+your `node_modules/.bin`:
+
+```bash
+pnpm langsync init
 ```
