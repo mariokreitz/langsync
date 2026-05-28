@@ -59,13 +59,13 @@ jobs:
 
       - name: Publish (dry-run)
         if: ${{ inputs.dry-run == true }}
-        run: pnpm --filter langsync-cli publish --dry-run --no-git-checks --access public
+        run: pnpm --filter @mariokreitz/langsync publish --dry-run --no-git-checks --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish
         if: ${{ inputs.dry-run != true }}
-        run: pnpm --filter langsync-cli publish --no-git-checks --access public
+        run: pnpm --filter @mariokreitz/langsync publish --no-git-checks --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           # Re-enable provenance once first publish has succeeded and the

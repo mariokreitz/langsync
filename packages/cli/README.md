@@ -1,10 +1,10 @@
-# langsync-cli
+# @mariokreitz/langsync
 
 > Modern localization workflow tooling for TypeScript applications.
 
-[![npm version](https://img.shields.io/npm/v/langsync-cli.svg?style=flat-square&color=2563eb)](https://www.npmjs.com/package/langsync-cli)
-[![Node](https://img.shields.io/node/v/langsync-cli?style=flat-square&color=2563eb)](https://nodejs.org)
-[![License](https://img.shields.io/npm/l/langsync-cli.svg?style=flat-square)](https://github.com/mariokreitz/langsync/blob/main/LICENSE)
+[![npm version](https://img.shields.io/npm/v/@mariokreitz/langsync.svg?style=flat-square&color=2563eb)](https://www.npmjs.com/package/@mariokreitz/langsync)
+[![Node](https://img.shields.io/node/v/@mariokreitz/langsync?style=flat-square&color=2563eb)](https://nodejs.org)
+[![License](https://img.shields.io/npm/l/@mariokreitz/langsync.svg?style=flat-square)](https://github.com/mariokreitz/langsync/blob/main/LICENSE)
 
 LangSync is a fast, typed, framework-agnostic CLI that keeps your translation
 files consistent across every locale and every collaborator — without the
@@ -19,9 +19,9 @@ chaos of hand-edited JSON or fragile Excel hand-offs.
 ## Install
 
 ```bash
-pnpm add -D langsync-cli
-# or: npm install -D langsync-cli
-# or: yarn add -D langsync-cli
+pnpm add -D @mariokreitz/langsync
+# or: npm install -D @mariokreitz/langsync
+# or: yarn add -D @mariokreitz/langsync
 ```
 
 > Requires **Node.js 22+** and an ESM-compatible project.
@@ -63,7 +63,7 @@ All read commands support `--reporter json`. All write commands support
 
 ```ts
 // langsync.config.ts
-import { defineConfig } from 'langsync-cli';
+import { defineConfig } from '@mariokreitz/langsync';
 
 export default defineConfig({
   input: './src/i18n',
