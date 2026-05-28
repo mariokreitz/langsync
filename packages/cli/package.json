@@ -1,5 +1,5 @@
 {
-  "name": "@mariokreitz/langsync",
+  "name": "@langsync/cli",
   "version": "0.1.0",
   "description": "Modern localization workflow tooling for TypeScript applications.",
   "keywords": [

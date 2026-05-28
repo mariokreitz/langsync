@@ -6,11 +6,11 @@
 
 Sync translations between developers, translators, and Excel — without chaos.
 
-[![npm version](https://img.shields.io/npm/v/@mariokreitz/langsync.svg?style=flat-square&color=2563eb)](https://www.npmjs.com/package/@mariokreitz/langsync)
+[![npm version](https://img.shields.io/npm/v/@langsync/cli.svg?style=flat-square&color=2563eb)](https://www.npmjs.com/package/@langsync/cli)
 [![CI](https://img.shields.io/github/actions/workflow/status/mariokreitz/langsync/ci.yml?branch=main&style=flat-square&label=CI)](https://github.com/mariokreitz/langsync/actions/workflows/ci.yml)
 [![codecov](https://img.shields.io/codecov/c/github/mariokreitz/langsync?style=flat-square)](https://codecov.io/gh/mariokreitz/langsync)
-[![Node](https://img.shields.io/node/v/@mariokreitz/langsync?style=flat-square&color=2563eb)](https://nodejs.org)
-[![License](https://img.shields.io/npm/l/@mariokreitz/langsync.svg?style=flat-square)](./LICENSE)
+[![Node](https://img.shields.io/node/v/@langsync/cli?style=flat-square&color=2563eb)](https://nodejs.org)
+[![License](https://img.shields.io/npm/l/@langsync/cli.svg?style=flat-square)](./LICENSE)
 
 [Documentation](#documentation) ·
 [Getting Started](#getting-started) ·
@@ -43,11 +43,11 @@ consistent across every locale and every collaborator.
 ### Install
 
 ```bash
-pnpm add -D @mariokreitz/langsync
+pnpm add -D @langsync/cli
 # or
-npm install -D @mariokreitz/langsync
+npm install -D @langsync/cli
 # or
-yarn add -D @mariokreitz/langsync
+yarn add -D @langsync/cli
 ```
 
 > Requires **Node.js 22+** and an ESM-compatible project.
@@ -101,7 +101,7 @@ commands support `--dry-run` for safe previews.
 Create a `langsync.config.ts` at the project root:
 
 ```ts
-import { defineConfig } from '@mariokreitz/langsync';
+import { defineConfig } from '@langsync/cli';
 
 export default defineConfig({
   input: './src/i18n',
