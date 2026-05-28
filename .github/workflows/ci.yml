@@ -36,17 +36,30 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # ----- Quality gates, in fail-fast / cost-ascending order -----
+      #
+      # 1. format:check   — style only, no build needed, cheapest signal.
+      # 2. build          — produces dist/ d.ts files that the type-aware
+      #                     lint rules (and typecheck) depend on. Turbo
+      #                     handles caching across runs.
+      # 3. typecheck      — verifies the TypeScript contract for every
+      #                     package, including files not bundled by tsup.
+      # 4. lint           — runs typed ESLint rules that need d.ts from
+      #                     workspace deps; turbo guarantees ^build first.
+      # 5. test:coverage  — most expensive; runs only if the rest passed.
+      # 6. codecov upload — only on green tests.
+
       - name: Format check
         run: pnpm format:check
-
-      - name: Lint
-        run: pnpm lint
 
       - name: Build
         run: pnpm build
 
       - name: Typecheck
         run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
 
       - name: Test
         run: pnpm test:coverage

@@ -24,8 +24,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+      - name: Enable Corepack
+        # Activates the pnpm version pinned in package.json#packageManager.
+        # Avoids pnpm/action-setup self-installer instability on current runners.
+        run: corepack enable
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
