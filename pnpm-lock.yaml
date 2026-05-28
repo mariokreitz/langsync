@@ -202,6 +202,10 @@ importers:
       zod:
         specifier: 'catalog:'
         version: 3.25.76
+    devDependencies:
+      memfs:
+        specifier: ^4.15.1
+        version: 4.57.2(tslib@2.8.1)
 
 packages:
 

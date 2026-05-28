@@ -3,8 +3,33 @@ title: langsync import
 description: Import translations from external formats.
 ---
 
-> **Status:** Coming soon (Phase 1).
-
 ## Subcommands
 
-- `langsync import excel` — import from an `.xlsx` workbook
+- `langsync import excel` — import from an `.xlsx` workbook.
+
+## `langsync import excel`
+
+Reads an Excel workbook produced by `langsync export excel` (or any workbook
+following the same layout) and writes each locale back to
+`<input>/<locale>.json`.
+
+### Usage
+
+```bash
+langsync import excel [--file <path>] [--sheet <name>] [--dry-run]
+```
+
+### Flags
+
+| Flag             | Default     | Description                                    |
+| ---------------- | ----------- | ---------------------------------------------- |
+| `--file <path>`  | from config | Input `.xlsx` path (overrides config).         |
+| `--sheet <name>` | from config | Worksheet name (overrides config).             |
+| `--dry-run`      | `false`     | Report planned writes without writing to disk. |
+
+### Behavior
+
+- Locales not listed in `locales` are skipped and reported as warnings.
+- Existing JSON files are overwritten with the imported values.
+- The expected workbook layout matches the
+  [export layout](./export#workbook-layout).

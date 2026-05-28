@@ -12,7 +12,7 @@
     "start": "next start --port 3001",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "test": "echo \"[docs] no tests yet\" && exit 0",
+    "test": "echo \"[docs] no tests yet\"",
     "clean": "rm -rf .next .turbo .source",
     "postinstall": "fumadocs-mdx"
   },

@@ -39,3 +39,7 @@ Thumbs.db
 .source/
 out/
 
+# Local planning / roadmap
+langsync-roadmap.md
+v1-plan.md
+*.plan.md

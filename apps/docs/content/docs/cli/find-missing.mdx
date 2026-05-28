@@ -1,6 +1,41 @@
 ---
 title: langsync find-missing
-description: Find missing translation keys across locales.
+description: Find missing translation keys per locale.
 ---
 
-> **Status:** Coming soon (Phase 1).
+`langsync find-missing` reports keys that exist in the reference locale but
+are missing from one or more other locales. It is a focused subset of
+[`langsync validate`](./validate).
+
+## Usage
+
+```bash
+langsync find-missing [--reporter <pretty|json>]
+```
+
+## Flags
+
+| Flag                | Default  | Description                                    |
+| ------------------- | -------- | ---------------------------------------------- |
+| `--reporter <kind>` | `pretty` | Output format. Use `json` for CI integrations. |
+
+## Exit codes
+
+- `0` — no missing keys.
+- `1` — at least one locale is missing one or more keys.
+
+## JSON reporter
+
+```bash
+langsync find-missing --reporter json
+```
+
+```json
+{
+  "referenceLocale": "en",
+  "missingByLocale": {
+    "de": ["greeting.bye"],
+    "fr": ["app.tagline", "greeting.bye"]
+  }
+}
+```

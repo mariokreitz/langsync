@@ -1,11 +1,39 @@
 import { type Command } from 'commander';
+import chalk from 'chalk';
 import { logger } from '@langsync/shared/logger';
+import { runFindMissing } from './find-missing/run.js';
+
+interface FindMissingFlags {
+  reporter: 'pretty' | 'json';
+}
 
 export function registerFindMissingCommand(program: Command): void {
   program
     .command('find-missing')
     .description('Find missing translation keys across locales.')
-    .action(() => {
-      logger.info('find-missing: missing-keys reporter (coming soon)');
+    .option('--reporter <kind>', 'Output format: pretty | json.', 'pretty')
+    .action(async (flags: FindMissingFlags) => {
+      try {
+        const { referenceLocale, missingByLocale, exitCode } = await runFindMissing({
+          cwd: process.cwd(),
+        });
+
+        if (flags.reporter === 'json') {
+          console.log(JSON.stringify({ referenceLocale, missingByLocale }, null, 2));
+        } else if (Object.keys(missingByLocale).length === 0) {
+          logger.success(`No missing keys relative to ${chalk.cyan(referenceLocale)}.`);
+        } else {
+          for (const [locale, keys] of Object.entries(missingByLocale)) {
+            logger.warn(`${chalk.cyan(locale)} is missing ${keys.length} key(s):`);
+            for (const key of keys) console.log(`  - ${key}`);
+          }
+        }
+
+        process.exitCode = exitCode;
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
+        logger.error(message);
+        process.exitCode = 1;
+      }
     });
 }

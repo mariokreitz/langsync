@@ -11,6 +11,9 @@ const config = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  async redirects() {
+    return [{ source: '/', destination: '/docs', permanent: false }];
+  },
 };
 
 export default withMDX(config);

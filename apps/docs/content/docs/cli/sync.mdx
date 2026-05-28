@@ -3,7 +3,26 @@ title: langsync sync
 description: Synchronize translation keys across all configured locales.
 ---
 
-> **Status:** Coming soon (Phase 1).
+`langsync sync` copies keys from the reference locale into every other
+locale, preserving existing translations and inserting empty placeholders
+for keys that do not yet have a translation. Keys that no longer exist in
+the reference locale are removed from the targets.
 
-Synchronizes keys from the reference locale into every other locale,
-preserving existing translations and inserting empty placeholders for missing keys.
+## Usage
+
+```bash
+langsync sync [--dry-run]
+```
+
+## Flags
+
+| Flag        | Default | Description                                        |
+| ----------- | ------- | -------------------------------------------------- |
+| `--dry-run` | `false` | Report planned writes without modifying any files. |
+
+## Behavior
+
+- Keys present in the reference but missing in a target are added as `""`.
+- Existing target values are preserved; the reference never overwrites them.
+- Keys present in the target but missing in the reference are removed.
+- The reference locale file itself is never modified.

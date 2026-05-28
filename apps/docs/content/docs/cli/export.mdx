@@ -3,8 +3,40 @@ title: langsync export
 description: Export translations to external formats.
 ---
 
-> **Status:** Coming soon (Phase 1).
-
 ## Subcommands
 
-- `langsync export excel` — export to an `.xlsx` workbook
+- `langsync export excel` — export to an `.xlsx` workbook.
+
+## `langsync export excel`
+
+Exports every configured locale into a single Excel workbook. Useful for
+sharing translation work with non-technical translators.
+
+### Usage
+
+```bash
+langsync export excel [--file <path>] [--sheet <name>]
+```
+
+### Flags
+
+| Flag             | Default     | Description                             |
+| ---------------- | ----------- | --------------------------------------- |
+| `--file <path>`  | from config | Output `.xlsx` path (overrides config). |
+| `--sheet <name>` | from config | Worksheet name (overrides config).      |
+
+If `excel.file` / `excel.sheetName` are unset in `langsync.config.ts`, the
+defaults are `translations.xlsx` and `Translations`.
+
+### Workbook layout
+
+Row 1 is a header row:
+
+| key            | en    | de       |
+| -------------- | ----- | -------- |
+| greeting.hello | Hello | Hallo    |
+| greeting.bye   | Bye   | Tschuess |
+
+- Column A contains the flattened (dot-notated) key.
+- Subsequent columns contain values per locale, in the order configured.
+- Keys are sorted alphabetically.

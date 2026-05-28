@@ -3,10 +3,45 @@ title: langsync validate
 description: Validate locale consistency, structure, and missing keys.
 ---
 
-> **Status:** Coming soon (Phase 1).
+`langsync validate` compares every configured locale against the reference
+locale (`defaultLocale`, or the first entry of `locales` when unset) and
+reports inconsistencies.
 
-Reports:
+## Usage
 
-- **missing keys** — present in reference locale but absent elsewhere
-- **extra keys** — present in a locale but absent in the reference
-- **empty values** — keys with empty translation strings
+```bash
+langsync validate [--reporter <pretty|json>]
+```
+
+## Flags
+
+| Flag                | Default  | Description                                    |
+| ------------------- | -------- | ---------------------------------------------- |
+| `--reporter <kind>` | `pretty` | Output format. Use `json` for CI integrations. |
+
+## Issue types
+
+| Type      | Meaning                                                              | Exit code impact |
+| --------- | -------------------------------------------------------------------- | ---------------- |
+| `missing` | Key is present in the reference locale but absent in another locale. | Fails (exit 1)   |
+| `extra`   | Key is present in a locale but not in the reference locale.          | Fails (exit 1)   |
+| `empty`   | Key exists but its value is an empty string.                         | Warning (exit 0) |
+
+## Exit codes
+
+- `0` — no `missing` or `extra` issues (empty values are warnings only).
+- `1` — at least one `missing` or `extra` issue, or a runtime error
+  (missing config, unreadable file, etc.).
+
+## JSON reporter
+
+```bash
+langsync validate --reporter json
+```
+
+```json
+{
+  "referenceLocale": "en",
+  "issues": [{ "type": "missing", "locale": "de", "key": "greeting.bye" }]
+}
+```
