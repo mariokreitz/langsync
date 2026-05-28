@@ -22,11 +22,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 11.4.0
-          run_install: false
+      - name: Enable Corepack
+        # Activates the pnpm version pinned in package.json#packageManager.
+        # Avoids pnpm/action-setup self-installer instability on current runners.
+        run: corepack enable
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -53,7 +52,7 @@ jobs:
         run: pnpm test:coverage
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: >-
