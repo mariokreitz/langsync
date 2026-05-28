@@ -1,6 +1,6 @@
 {
   "name": "@mariokreitz/langsync",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Modern localization workflow tooling for TypeScript applications.",
   "keywords": [
     "i18n",
@@ -57,16 +57,20 @@
     "clean": "rm -rf dist .turbo"
   },
   "dependencies": {
+    "chalk": "catalog:",
+    "commander": "catalog:",
+    "cosmiconfig": "catalog:",
+    "cosmiconfig-typescript-loader": "^6.1.0",
+    "exceljs": "catalog:",
+    "listr2": "catalog:",
+    "ora": "catalog:",
+    "prompts": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
     "@langsync/shared": "workspace:*",
     "@langsync/core": "workspace:*",
     "@langsync/excel-engine": "workspace:*",
-    "chalk": "catalog:",
-    "commander": "catalog:",
-    "listr2": "catalog:",
-    "ora": "catalog:",
-    "prompts": "catalog:"
-  },
-  "devDependencies": {
     "@types/prompts": "^2.4.9",
     "memfs": "^4.15.1"
   }

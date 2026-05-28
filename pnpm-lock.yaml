@@ -138,21 +138,21 @@ importers:
 
   packages/cli:
     dependencies:
-      '@langsync/core':
-        specifier: workspace:*
-        version: link:../core
-      '@langsync/excel-engine':
-        specifier: workspace:*
-        version: link:../excel-engine
-      '@langsync/shared':
-        specifier: workspace:*
-        version: link:../shared
       chalk:
         specifier: 'catalog:'
         version: 5.6.2
       commander:
         specifier: 'catalog:'
         version: 12.1.0
+      cosmiconfig:
+        specifier: 'catalog:'
+        version: 9.0.1(typescript@5.9.3)
+      cosmiconfig-typescript-loader:
+        specifier: ^6.1.0
+        version: 6.3.0(@types/node@22.19.19)(cosmiconfig@9.0.1(typescript@5.9.3))(typescript@5.9.3)
+      exceljs:
+        specifier: 'catalog:'
+        version: 4.4.0
       listr2:
         specifier: 'catalog:'
         version: 8.3.3
@@ -162,7 +162,19 @@ importers:
       prompts:
         specifier: 'catalog:'
         version: 2.4.2
+      zod:
+        specifier: 'catalog:'
+        version: 3.25.76
     devDependencies:
+      '@langsync/core':
+        specifier: workspace:*
+        version: link:../core
+      '@langsync/excel-engine':
+        specifier: workspace:*
+        version: link:../excel-engine
+      '@langsync/shared':
+        specifier: workspace:*
+        version: link:../shared
       '@types/prompts':
         specifier: ^2.4.9
         version: 2.4.9
