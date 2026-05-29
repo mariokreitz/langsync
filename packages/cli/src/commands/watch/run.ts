@@ -1,7 +1,7 @@
 import { resolve } from 'node:path';
 import { loadConfig } from '@langsync/shared/config';
 import { loadLocaleFiles } from '@langsync/shared/fs';
-import { validateLocales, type ValidationIssue } from '@langsync/core';
+import { validateLocales, type ValidationIssue, type TreeDiff } from '@langsync/core';
 import { runSync } from '../sync/run.js';
 
 export interface RunWatchPassOptions {
@@ -12,6 +12,13 @@ export interface RunWatchPassOptions {
 export interface RunWatchPassResult {
   referenceLocale: string;
   written: string[];
+  /** Paths skipped because they were already in sync with the reference. */
+  unchanged: string[];
+  /**
+   * Per-path diff keyed by absolute file path.
+   * Only contains entries for files that had changes.
+   */
+  diffsByPath: Record<string, TreeDiff>;
   issues: ValidationIssue[];
 }
 
@@ -32,7 +39,7 @@ export async function resolveWatchDir(cwd: string): Promise<string> {
  * Returned to the watch command so it can render a compact summary.
  */
 export async function runWatchPass(options: RunWatchPassOptions): Promise<RunWatchPassResult> {
-  const { referenceLocale, written } = await runSync({
+  const { referenceLocale, written, unchanged, diffsByPath } = await runSync({
     cwd: options.cwd,
     dryRun: options.dryRun,
   });
@@ -49,5 +56,5 @@ export async function runWatchPass(options: RunWatchPassOptions): Promise<RunWat
   });
 
   const issues = validateLocales(files, referenceLocale);
-  return { referenceLocale, written, issues };
+  return { referenceLocale, written, unchanged, diffsByPath, issues };
 }

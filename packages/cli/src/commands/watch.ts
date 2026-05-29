@@ -3,6 +3,7 @@ import chalk from 'chalk';
 import { join, relative } from 'node:path';
 import chokidar from 'chokidar';
 import { logger } from '@langsync/shared/logger';
+import { type TreeDiff } from '@langsync/core';
 import { resolveWatchDir, runWatchPass } from './watch/run.js';
 
 interface WatchFlags {
@@ -10,12 +11,34 @@ interface WatchFlags {
   debounce: string;
 }
 
-function reportPass(cwd: string, written: string[], issueCount: number): void {
-  if (written.length === 0) {
-    logger.info('No locale changes to sync.');
+function formatDiff(diff: TreeDiff): string {
+  const parts: string[] = [];
+  if (diff.added.length > 0) parts.push(chalk.green(`+${diff.added.length}`));
+  if (diff.removed.length > 0) parts.push(chalk.red(`-${diff.removed.length}`));
+  if (diff.changed.length > 0) parts.push(chalk.yellow(`~${diff.changed.length}`));
+  return parts.join(', ');
+}
+
+function reportPass(
+  cwd: string,
+  written: string[],
+  unchanged: string[],
+  diffsByPath: Record<string, TreeDiff>,
+  issueCount: number,
+): void {
+  if (written.length === 0 && unchanged.length === 0) {
+    logger.info('No locale files found to sync.');
+  } else if (written.length === 0) {
+    logger.info('All locales are already in sync.');
   } else {
     for (const path of written) {
-      logger.success(`Synced ${chalk.bold(relative(cwd, path))}`);
+      const rel = relative(cwd, path);
+      const diff = diffsByPath[path];
+      const summary = diff ? ` (${formatDiff(diff)})` : '';
+      logger.success(`Synced ${chalk.bold(rel)}${summary}`);
+    }
+    for (const path of unchanged) {
+      logger.info(`No changes: ${chalk.dim(relative(cwd, path))}`);
     }
   }
   if (issueCount > 0) {
@@ -39,7 +62,13 @@ export function registerWatchCommand(program: Command): void {
 
         // Initial pass so the user sees current state immediately.
         const initial = await runWatchPass({ cwd, dryRun: flags.dryRun });
-        reportPass(cwd, initial.written, initial.issues.length);
+        reportPass(
+          cwd,
+          initial.written,
+          initial.unchanged,
+          initial.diffsByPath,
+          initial.issues.length,
+        );
 
         logger.info(`Watching ${chalk.cyan(relative(cwd, watchDir) || '.')} for changes...`);
 
@@ -57,7 +86,7 @@ export function registerWatchCommand(program: Command): void {
               running = true;
               try {
                 const pass = await runWatchPass({ cwd, dryRun: flags.dryRun });
-                reportPass(cwd, pass.written, pass.issues.length);
+                reportPass(cwd, pass.written, pass.unchanged, pass.diffsByPath, pass.issues.length);
               } catch (error: unknown) {
                 logger.error(error instanceof Error ? error.message : String(error));
               } finally {
