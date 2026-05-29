@@ -1,6 +1,6 @@
 {
   "name": "@mariokreitz/langsync",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Modern localization workflow tooling for TypeScript applications.",
   "keywords": [
     "i18n",
