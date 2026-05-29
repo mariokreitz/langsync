@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { vol } from 'memfs';
-import { loadLocaleFiles } from './index.js';
+import { loadLocaleFiles, readJson, writeJson, pathExists } from './index.js';
 
 vi.mock('node:fs/promises', async () => {
   const memfs = await import('memfs');
@@ -51,5 +51,54 @@ describe('loadLocaleFiles', () => {
     await expect(
       loadLocaleFiles({ cwd: '/p', inputDir: './src/i18n', locales: ['en'] }),
     ).rejects.toThrow(/en\.json/);
+  });
+});
+
+describe('readJson', () => {
+  beforeEach(() => vol.reset());
+  afterEach(() => vol.reset());
+
+  it('reads and parses a JSON file', async () => {
+    vol.fromJSON({ '/data/config.json': '{"key":"value"}' });
+    const result = await readJson<{ key: string }>('/data/config.json');
+    expect(result).toEqual({ key: 'value' });
+  });
+
+  it('throws when the file does not exist', async () => {
+    await expect(readJson('/no/such/file.json')).rejects.toThrow();
+  });
+});
+
+describe('writeJson', () => {
+  beforeEach(() => vol.reset());
+  afterEach(() => vol.reset());
+
+  it('writes a JSON file with 2-space indentation and trailing newline', async () => {
+    vol.fromJSON({ '/out/.keep': '' });
+    await writeJson('/out/result.json', { a: 1 });
+    const { readFile } = await import('node:fs/promises');
+    const content = await readFile('/out/result.json', 'utf-8');
+    expect(content).toBe('{\n  "a": 1\n}\n');
+  });
+
+  it('creates parent directories automatically', async () => {
+    await writeJson('/deep/nested/dir/result.json', { x: 2 });
+    const { readFile } = await import('node:fs/promises');
+    const content = await readFile('/deep/nested/dir/result.json', 'utf-8');
+    expect(JSON.parse(content)).toEqual({ x: 2 });
+  });
+});
+
+describe('pathExists', () => {
+  beforeEach(() => vol.reset());
+  afterEach(() => vol.reset());
+
+  it('returns true when the path exists', async () => {
+    vol.fromJSON({ '/exists/file.txt': 'data' });
+    await expect(pathExists('/exists/file.txt')).resolves.toBe(true);
+  });
+
+  it('returns false when the path does not exist', async () => {
+    await expect(pathExists('/no/such/path.txt')).resolves.toBe(false);
   });
 });

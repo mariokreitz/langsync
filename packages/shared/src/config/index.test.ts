@@ -1,5 +1,15 @@
-import { describe, expect, it } from 'vitest';
-import { LangSyncConfigSchema, defineConfig, type LangSyncConfigInput } from './index.js';
+import { describe, expect, it, vi } from 'vitest';
+import { LangSyncConfigSchema, defineConfig, loadConfig, type LangSyncConfigInput } from './index.js';
+
+vi.mock('cosmiconfig', () => ({
+  cosmiconfig: vi.fn(() => ({
+    search: vi.fn().mockResolvedValue(null),
+  })),
+}));
+
+vi.mock('cosmiconfig-typescript-loader', () => ({
+  TypeScriptLoader: vi.fn(() => ({})),
+}));
 
 describe('LangSyncConfigSchema', () => {
   it('accepts the minimum required fields (input, locales)', () => {
@@ -89,5 +99,91 @@ describe('defineConfig', () => {
       defaultLocale: 'en',
       framework: 'i18next',
     });
+  });
+
+  it('requires at least one locale', () => {
+    expect(() =>
+      LangSyncConfigSchema.parse({
+        input: './src/i18n',
+        output: './out',
+        locales: [],
+      }),
+    ).toThrow();
+  });
+
+  it('requires the input field', () => {
+    expect(() => LangSyncConfigSchema.parse({ output: './out', locales: ['en'] })).toThrow();
+  });
+
+  // output is optional — it defaults to './translations' (added in config-ux-polish)
+
+  it('applies ai.provider default of openai', () => {
+    const parsed = LangSyncConfigSchema.parse({
+      input: './src',
+      output: './out',
+      locales: ['en'],
+      ai: {},
+    });
+    expect(parsed.ai?.provider).toBe('openai');
+  });
+
+  it('applies excel defaults for file and sheetName', () => {
+    const parsed = LangSyncConfigSchema.parse({
+      input: './src',
+      output: './out',
+      locales: ['en'],
+      excel: {},
+    });
+    expect(parsed.excel?.file).toBe('translations.xlsx');
+    expect(parsed.excel?.sheetName).toBe('Translations');
+  });
+
+  it('passes defaultLocale through', () => {
+    const parsed = LangSyncConfigSchema.parse({
+      input: './src',
+      output: './out',
+      locales: ['en', 'de'],
+      defaultLocale: 'en',
+    });
+    expect(parsed.defaultLocale).toBe('en');
+  });
+});
+
+describe('defineConfig', () => {
+  it('returns the config object unchanged', () => {
+    const cfg = defineConfig({
+      input: './src/i18n',
+      output: './translations',
+      locales: ['en'],
+    });
+    expect(cfg.input).toBe('./src/i18n');
+    expect(cfg.output).toBe('./translations');
+  });
+});
+
+describe('loadConfig', () => {
+  it('returns null when no config file is found', async () => {
+    const { cosmiconfig } = await import('cosmiconfig');
+    vi.mocked(cosmiconfig).mockReturnValue({
+      search: vi.fn().mockResolvedValue(null),
+    } as never);
+
+    const result = await loadConfig('/tmp/no-config');
+    expect(result).toBeNull();
+  });
+
+  it('returns parsed config and filepath when a config is found', async () => {
+    const { cosmiconfig } = await import('cosmiconfig');
+    vi.mocked(cosmiconfig).mockReturnValue({
+      search: vi.fn().mockResolvedValue({
+        config: { input: './src', output: './out', locales: ['en', 'de'] },
+        filepath: '/project/langsync.config.ts',
+      }),
+    } as never);
+
+    const result = await loadConfig('/project');
+    expect(result).not.toBeNull();
+    expect(result!.filepath).toBe('/project/langsync.config.ts');
+    expect(result!.config.locales).toEqual(['en', 'de']);
   });
 });
