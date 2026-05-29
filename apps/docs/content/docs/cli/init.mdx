@@ -7,7 +7,7 @@ import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
 import { Callout } from 'fumadocs-ui/components/callout';
 
 `langsync init` scaffolds a typed `langsync.config.ts` (or `.json` with
-`--json`) and creates per-locale JSON stubs in your input directory.
+`--json`) and creates locale JSON stubs in your selected layout.
 
 ## Usage
 
@@ -41,12 +41,36 @@ yarn langsync init [--force] [--json] [--yes]
    (`i18next`, `react-i18next`, `i18next-vue`, `@ngx-translate/core`,
    `@ngx-translate/http-loader`, `react-intl`, `@formatjs/intl`) and
    pre-selects the detected framework.
-2. Asks for **input directory**, **output directory**, **locales**, and
-   **default locale**.
-3. Writes a typed `langsync.config.ts` (or `langsync.config.json` with
+2. Asks for **input directory**, **locale file layout**, **output directory**,
+   **locales**, and **default locale**.
+3. If you choose a namespaced layout, asks for initial namespace names.
+4. Writes a typed `langsync.config.ts` (or `langsync.config.json` with
    `--json`) at the project root.
-4. Scaffolds empty `<locale>.json` files inside the input directory for
-   each configured locale (existing files are preserved).
+5. Scaffolds empty locale files for every configured locale and initial
+   namespace. Existing files are preserved.
+
+## Interactive prompts
+
+```text
+? Where are your source i18n files? > ./src/i18n
+? How should locale files be organized?
+  > Single file per locale (<input>/<locale>.json)
+    Namespace folders per locale (<input>/<locale>/<namespace>.json)
+    Flat namespace-prefixed files (<input>/<locale>.<namespace>.json)
+? Where should translation output go? > ./translations
+? Which locales? (comma-separated) > en,de
+? Default (reference) locale? > en
+? Which i18n framework do you use? > i18next
+```
+
+For either namespaced layout, `init` asks one additional question:
+
+```text
+? Initial namespaces? (comma-separated) > common
+```
+
+The namespace list is trimmed and empty entries are ignored. If the answer is
+empty, `init` scaffolds `common`.
 
 ## Flags
 
@@ -54,7 +78,94 @@ yarn langsync init [--force] [--json] [--yes]
 | --------- | ------- | ---------------------------------------------------------------------- |
 | `--force` | `false` | Overwrite an existing `langsync.config.*` file without asking.         |
 | `--json`  | `false` | Emit `langsync.config.json` instead of `.ts`.                          |
-| `--yes`   | `false` | Skip every prompt; use sensible defaults (`./src/i18n`, `[en]`, etc.). |
+| `--yes`   | `false` | Skip every prompt; use the single-file defaults (`./src/i18n`, `en,de`). |
+
+<Callout title="Non-interactive mode stays single-file">
+  `langsync init --yes` does not enable namespaces. It preserves the original default layout and
+  creates `<input>/<locale>.json` files only.
+</Callout>
+
+## Generated layouts
+
+<Tabs items={['Single file', 'locale-dir', 'locale-prefix']}>
+<Tab value="Single file">
+
+Default selection. No `namespaces` block is written.
+
+```ts title="langsync.config.ts"
+import { defineConfig } from '@mariokreitz/langsync';
+
+export default defineConfig({
+  input: './src/i18n',
+  output: './translations',
+  locales: ['en', 'de'],
+  defaultLocale: 'en',
+  framework: 'i18next',
+});
+```
+
+```text
+src/i18n/
+  en.json
+  de.json
+```
+
+</Tab>
+<Tab value="locale-dir">
+
+Choose `Namespace folders per locale` and enter `common,auth/login`.
+
+```ts title="langsync.config.ts"
+import { defineConfig } from '@mariokreitz/langsync';
+
+export default defineConfig({
+  input: './src/i18n',
+  output: './translations',
+  locales: ['en', 'de'],
+  defaultLocale: 'en',
+  framework: 'i18next',
+  namespaces: { structure: 'locale-dir' },
+});
+```
+
+```text
+src/i18n/
+  en/
+    common.json
+    auth/login.json
+  de/
+    common.json
+    auth/login.json
+```
+
+</Tab>
+<Tab value="locale-prefix">
+
+Choose `Flat namespace-prefixed files` and enter `common,admin.users`.
+
+```ts title="langsync.config.ts"
+import { defineConfig } from '@mariokreitz/langsync';
+
+export default defineConfig({
+  input: './src/i18n',
+  output: './translations',
+  locales: ['en', 'de'],
+  defaultLocale: 'en',
+  framework: 'i18next',
+  namespaces: { structure: 'locale-prefix' },
+});
+```
+
+```text
+src/i18n/
+  en.common.json
+  en.admin.users.json
+  de.common.json
+  de.admin.users.json
+```
+
+</Tab>
+</Tabs>
 
 ## Examples
 
@@ -70,13 +181,14 @@ pnpm langsync init
 pnpm langsync init --yes
 ```
 
-Produces a config with:
+Produces a single-file config with:
 
 - `input: './src/i18n'`
 - `output: './translations'`
-- `locales: ['en']`
+- `locales: ['en', 'de']`
 - `defaultLocale: 'en'`
 - Framework auto-detected from `package.json` (or `none`)
+- No `namespaces` block
 
 ### Re-initialize an existing project
 
@@ -91,22 +203,7 @@ pnpm langsync init --json
 ```
 
 <Callout title="Existing locale files are never touched">
-  `init` only creates `<locale>.json` for locales that don't already exist
-  on disk. Your existing translations are safe.
+  `init` only creates files that don't already exist on disk. Your existing translations are safe.
 </Callout>
-
-## Generated config
-
-```ts title="langsync.config.ts"
-import { defineConfig } from '@mariokreitz/langsync';
-
-export default defineConfig({
-  input: './src/i18n',
-  output: './translations',
-  locales: ['en', 'de'],
-  defaultLocale: 'en',
-  framework: 'i18next',
-});
-```
 
 See [Configuration](../configuration) for every supported option.

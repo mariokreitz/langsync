@@ -52,7 +52,7 @@ yarn add --dev @mariokreitz/langsync
 ### Initialize your project
 
 Run the interactive setup. LangSync inspects your `package.json` to
-auto-detect your i18n framework, asks a few short questions, then writes a
+auto-detect your i18n framework, asks a few short questions including the locale file layout, then writes a
 typed `langsync.config.ts` and scaffolds empty locale stubs.
 
 <Tabs items={['pnpm', 'npm', 'yarn']}>
@@ -85,22 +85,23 @@ You'll see something like:
   LangSync  v0.2.x
   Modern localization workflow tooling.
 
-- Detecting i18n framework…
-✔ Detected: i18next
-? Input directory (where locale files live)  › ./src/i18n
-? Output directory (Excel exports, reports)   › ./translations
-? Comma-separated locales                     › en, de, fr
-? Default locale                              › en
+- Detecting i18n framework...
+- Detected: i18next
+? Input directory (where locale files live)  > ./src/i18n
+? Locale file layout                         > Single file per locale (<input>/<locale>.json)
+? Output directory (Excel exports, reports)  > ./translations
+? Comma-separated locales                    > en, de, fr
+? Default locale                             > en
 
-✔ Created langsync.config.ts
-✔ Scaffolded src/i18n/en.json
-✔ Scaffolded src/i18n/de.json
-✔ Scaffolded src/i18n/fr.json
+- Created langsync.config.ts
+- Scaffolded src/i18n/en.json
+- Scaffolded src/i18n/de.json
+- Scaffolded src/i18n/fr.json
 ```
 
 <Callout type="info">
-  Pass `--yes` to skip every prompt and accept defaults, or `--force` to overwrite an existing
-  config.
+  Pass `--yes` to skip every prompt and accept the single-file defaults, or `--force` to
+  overwrite an existing config.
 </Callout>
 
 </Step>
@@ -294,5 +295,5 @@ yarn langsync import excel
   [validate command reference](./cli/validate) for the exact recipe.
 - Automate empty-value translation with [`langsync translate`](./cli/translate).
 - Keep locales in sync while you code with [`langsync watch`](./cli/watch).
-- Tune your setup with the full [Configuration](./configuration) reference.
+- Tune your setup, including namespace layouts, with the full [Configuration](./configuration) reference.
 - Read the [Integrations](./integrations/i18next) page for your framework.

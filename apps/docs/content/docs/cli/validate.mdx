@@ -7,6 +7,8 @@ description: Validate locale consistency, structure, and missing keys.
 locale (`defaultLocale`, or the first entry of `locales` when unset) and
 reports inconsistencies.
 
+With `namespaces` configured, validation runs independently per namespace file.
+
 ## Usage
 
 ```bash
@@ -27,10 +29,21 @@ langsync validate [--reporter <pretty|json>]
 | `extra`   | Key is present in a locale but not in the reference locale.          | Fails (exit 1)   |
 | `empty`   | Key exists but its value is an empty string.                         | Warning (exit 0) |
 
+## Namespaced behavior
+
+- Missing whole namespace files in target locales are treated as empty trees.
+- Extra target-only namespace files validate as `extra` while they contain keys.
+- Empty extra namespace files left behind by `sync` are inert and do not keep
+  validation failing.
+- If no namespace files are discovered while `namespaces` is configured, the
+  command fails with an actionable error.
+- Pretty output labels namespaced keys as `namespace:key`, for example
+  `auth/login:greeting.submit`.
+
 ## Exit codes
 
-- `0` — no `missing` or `extra` issues (empty values are warnings only).
-- `1` — at least one `missing` or `extra` issue, or a runtime error
+- `0` - no `missing` or `extra` issues (empty values are warnings only).
+- `1` - at least one `missing` or `extra` issue, or a runtime error
   (missing config, unreadable file, etc.).
 
 ## JSON reporter
@@ -45,6 +58,9 @@ langsync validate --reporter json
   "issues": [{ "type": "missing", "locale": "de", "key": "greeting.bye" }]
 }
 ```
+
+In namespaced mode, issue records include namespace context so consumers can
+distinguish the same key in different files.
 
 ## Complete example
 
@@ -67,4 +83,4 @@ langsync ℹ Summary: 1 missing, 0 extra, 0 empty
 ```
 
 The command exits with code `1` because `de` is missing `greeting.bye`, so the
-PR check fails until the key is added (e.g. via `langsync sync`).
+PR check fails until the key is added (for example via `langsync sync`).

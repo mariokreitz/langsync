@@ -5,7 +5,10 @@ description: Fill empty values in non-reference locales using an AI provider.
 
 `langsync translate` fills empty (or missing) values in every non-reference
 locale by translating the reference value with an AI provider. Existing
-translations are never overwritten — the target always wins.
+translations are never overwritten; the target always wins.
+
+With `namespaces` configured, translation runs independently per namespace
+file.
 
 ## Usage
 
@@ -48,7 +51,14 @@ export default defineConfig({
 
 ## Behavior
 
-- Only keys empty/missing in a target and non-empty in the reference are sent.
+- Only keys empty or missing in a target and non-empty in the reference are
+  sent to the provider.
 - Each translation request preserves placeholders and ICU syntax.
-- On any provider/transport error the command exits with code `1`.
+- On any provider or transport error the command exits with code `1`.
 - The reference locale file is never modified.
+- Missing namespace files in target locales are synthesized as empty trees and
+  created only when translations are written.
+- Extra target-only namespace files are left untouched.
+- If no namespace files are discovered while `namespaces` is configured, the
+  command fails with an actionable error.
+- CLI output labels namespaced keys as `namespace:key` where needed.

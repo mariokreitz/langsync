@@ -14,7 +14,7 @@ chaos of hand-edited JSON or fragile Excel hand-offs.
 - **Bidirectional Excel I/O** for non-technical translators.
 - **Strict validation** with CI-friendly exit codes and JSON output.
 - **Auto-detected integrations** for `i18next`, `ngx-translate`, `react-intl`.
-- **Interactive setup** that scaffolds your config and locale files.
+- **Interactive setup** that scaffolds your config and single-file or namespaced locale files.
 
 ## Install
 
@@ -59,13 +59,13 @@ npx langsync import excel
 | Command                 | Description                                                         |
 | ----------------------- | ------------------------------------------------------------------- |
 | `langsync init`         | Initialize a typed `langsync.config.ts` and scaffold locale files.  |
-| `langsync validate`     | Report missing, extra, and empty keys; exits non-zero on errors.    |
+| `langsync validate`     | Report missing, extra, and empty keys across locales/namespaces.    |
 | `langsync find-missing` | Report missing keys per locale; exits non-zero on errors.           |
-| `langsync sync`         | Synchronize keys from the reference locale into every other locale. |
+| `langsync sync`         | Synchronize reference keys into each target locale or namespace.    |
 | `langsync translate`    | Fill empty values in non-reference locales using an AI provider.    |
 | `langsync watch`        | Watch locale files and run incremental sync + validation on change. |
-| `langsync export excel` | Export all locales into a single `.xlsx` workbook.                  |
-| `langsync import excel` | Import translations from a workbook back into JSON files.           |
+| `langsync export excel` | Export locales/namespaces into a single `.xlsx` workbook.           |
+| `langsync import excel` | Import workbook translations back into configured JSON files.       |
 
 All read commands support `--reporter json`. All write commands support
 `--dry-run`.
@@ -83,6 +83,9 @@ export default defineConfig({
   locales: ['en', 'de', 'fr'],
   defaultLocale: 'en',
   framework: 'i18next',
+  // Opt in to namespaced files when your project outgrows one file per locale.
+  // namespaces: { structure: 'locale-dir' }, // ./src/i18n/en/common.json
+  // namespaces: { structure: 'locale-prefix' }, // ./src/i18n/en.common.json
   excel: {
     file: 'translations.xlsx',
     sheetName: 'Translations',
@@ -95,7 +98,9 @@ export default defineConfig({
 ```
 
 JSON, JS, and MJS configs are also supported via cosmiconfig. Omit `framework`
-or set `framework: 'none'` for custom setups.
+or set `framework: 'none'` for custom setups. Omit `namespaces` for the default
+`<input>/<locale>.json` layout, or set `namespaces.structure` to `locale-dir`
+or `locale-prefix` for per-namespace files.
 
 ## Documentation
 

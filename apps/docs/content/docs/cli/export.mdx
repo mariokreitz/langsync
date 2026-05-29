@@ -5,12 +5,16 @@ description: Export translations to external formats.
 
 ## Subcommands
 
-- `langsync export excel` — export to an `.xlsx` workbook.
+- `langsync export excel` - export to an `.xlsx` workbook.
 
 ## `langsync export excel`
 
 Exports every configured locale into a single Excel workbook. Useful for
 sharing translation work with non-technical translators.
+
+With `namespaces` configured, export includes every discovered namespace file.
+If no namespace files are discovered, the command fails with an actionable
+error instead of writing an empty workbook.
 
 ### Usage
 
@@ -30,7 +34,7 @@ defaults are `translations.xlsx` and `Translations`.
 
 ### Workbook layout
 
-Row 1 is a header row:
+Single-file projects keep the legacy workbook format. Row 1 is a header row:
 
 | key            | en    | de       |
 | -------------- | ----- | -------- |
@@ -40,6 +44,26 @@ Row 1 is a header row:
 - Column A contains the flattened (dot-notated) key.
 - Subsequent columns contain values per locale, in the order configured.
 - Keys are sorted alphabetically.
+
+Namespaced projects add a leading `namespace` column:
+
+| namespace  | key            | en     | de      |
+| ---------- | -------------- | ------ | ------- |
+| common     | app.title      | App    | App     |
+| auth/login | form.submit    | Sign in | Anmelden |
+
+- Column A contains the namespace.
+- Column B contains the flattened key within that namespace.
+- Locale columns start after `key`.
+- Row identity is `(namespace, key)`; duplicate identities are rejected on
+  import.
+
+### Compatibility
+
+- Existing single-file workbooks use `key, <locale...>` and remain supported.
+- Namespaced workbooks use `namespace, key, <locale...>`.
+- Importing a namespaced workbook into a single-file config errors clearly.
+- Importing a legacy workbook into a namespaced config errors clearly.
 
 ### Complete example
 

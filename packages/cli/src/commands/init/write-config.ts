@@ -42,7 +42,14 @@ async function findExistingConfig(cwd: string): Promise<string | null> {
 
 function renderTsConfig(answers: InitAnswers): string {
   const frameworkLine =
-    answers.framework === 'none' ? '' : `  framework: '${answers.framework}',\n`;
+    answers.framework === 'none'
+      ? ''
+      : `  framework: '${answers.framework}',
+`;
+  const namespacesLine = answers.namespaces
+    ? `  namespaces: { structure: '${answers.namespaces.structure}' },
+`
+    : '';
   const localesArr = answers.locales.map((l) => `'${l}'`).join(', ');
   return `import { defineConfig } from '@mariokreitz/langsync';
 
@@ -51,7 +58,7 @@ export default defineConfig({
   output: '${answers.output}',
   locales: [${localesArr}],
   defaultLocale: '${answers.defaultLocale}',
-${frameworkLine}});
+${frameworkLine}${namespacesLine}});
 `;
 }
 
@@ -63,7 +70,27 @@ function renderJsonConfig(answers: InitAnswers): string {
     defaultLocale: answers.defaultLocale,
   };
   if (answers.framework !== 'none') obj.framework = answers.framework;
+  if (answers.namespaces) obj.namespaces = answers.namespaces;
   return JSON.stringify(obj, null, 2) + '\n';
+}
+
+function getLocaleStubPaths(inputDir: string, answers: InitAnswers): string[] {
+  if (!answers.namespaces) {
+    return answers.locales.map((locale) => join(inputDir, `${locale}.json`));
+  }
+
+  const initialNamespaces = answers.initialNamespaces?.length
+    ? answers.initialNamespaces
+    : ['common'];
+
+  return answers.locales.flatMap((locale) =>
+    initialNamespaces.map((namespace) => {
+      if (answers.namespaces?.structure === 'locale-dir') {
+        return join(inputDir, locale, `${namespace}.json`);
+      }
+      return join(inputDir, `${locale}.${namespace}.json`);
+    }),
+  );
 }
 
 /**
@@ -87,13 +114,12 @@ export async function writeConfig(options: WriteConfigOptions): Promise<WriteCon
   await mkdir(dirname(configPath), { recursive: true });
   await writeFile(configPath, content, 'utf-8');
 
-  // Scaffold empty locale stubs in the input directory.
   const inputDir = resolve(cwd, answers.input);
   await mkdir(inputDir, { recursive: true });
   const createdLocaleFiles: string[] = [];
-  for (const locale of answers.locales) {
-    const localePath = join(inputDir, `${locale}.json`);
+  for (const localePath of getLocaleStubPaths(inputDir, answers)) {
     if (!(await pathExists(localePath))) {
+      await mkdir(dirname(localePath), { recursive: true });
       await writeFile(localePath, '{}\n', 'utf-8');
       createdLocaleFiles.push(localePath);
     }
