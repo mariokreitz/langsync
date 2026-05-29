@@ -39,7 +39,7 @@ inputs:
     required: false
     default: ''
   ai-model:
-    description: 'Provider model id (e.g. gpt-4o-mini). Uses the provider default when empty.'
+    description: 'Provider model id (e.g. gpt-5-mini). Uses the provider default when empty.'
     required: false
     default: ''
   ai-dry-run:

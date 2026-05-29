@@ -3,7 +3,6 @@ title: CI Integration
 description: Fail pull requests when locales drift. Recipes for GitHub Actions, GitLab CI, and CircleCI.
 ---
 
-import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
 import { Callout } from 'fumadocs-ui/components/callout';
 
 `langsync validate` (and `find-missing`) exit with code `1` when a locale
@@ -47,8 +46,8 @@ jobs:
 
 <Callout title="AI translate in CI">
   The action can optionally run `langsync translate` before validating, to fill empty values with an
-  AI provider. It is **off by default**. Enable it with `translate: true` and pass the API key from a
-  secret (never hard-code it). See [AI translate in CI](#ai-translate-in-ci) below.
+  AI provider. It is **off by default**. Enable it with `translate: true` and pass the API key from
+  a secret (never hard-code it). See [AI translate in CI](#ai-translate-in-ci) below.
 </Callout>
 
 ### AI translate in CI
@@ -82,20 +81,20 @@ jobs:
           translate: true
           ai-provider: openai
           ai-api-key: ${{ secrets.OPENAI_API_KEY }}
-          ai-model: gpt-4o-mini
+          ai-model: gpt-5-mini
           # Recommended on PRs: report only, do not write files or incur a full bill.
           ai-dry-run: true
           fail-on-issues: true
           comment: true
 ```
 
-| Input         | Default  | Description                                                            |
-| ------------- | -------- | ---------------------------------------------------------------------- |
-| `translate`   | `false`  | Run `langsync translate` before validating.                            |
-| `ai-provider` | `openai` | `openai`, `deepl`, `anthropic`, or `gemini`.                           |
-| `ai-api-key`  | —        | Provider API key. Pass via a secret. Required when `translate: true`.  |
-| `ai-model`    | —        | Provider model id. Uses the provider default when empty.               |
-| `ai-dry-run`  | `false`  | Report planned translations without writing files.                     |
+| Input         | Default  | Description                                                           |
+| ------------- | -------- | --------------------------------------------------------------------- |
+| `translate`   | `false`  | Run `langsync translate` before validating.                           |
+| `ai-provider` | `openai` | `openai`, `deepl`, `anthropic`, or `gemini`.                          |
+| `ai-api-key`  | —        | Provider API key. Pass via a secret. Required when `translate: true`. |
+| `ai-model`    | —        | Provider model id. Uses the provider default when empty.              |
+| `ai-dry-run`  | `false`  | Report planned translations without writing files.                    |
 
 <Callout type="warn" title="Translate incurs real API costs">
   `langsync translate` calls a paid AI API for every empty key on every run. Use `ai-dry-run: true`
