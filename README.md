@@ -1,6 +1,6 @@
 <div align="center">
 
-# LangSync
+<img width="898" height="251" alt="image" src="https://github.com/user-attachments/assets/828625ad-9e97-4d25-bc0b-0cfc78659ffa" />
 
 **Modern localization workflow tooling for TypeScript applications.**
 
