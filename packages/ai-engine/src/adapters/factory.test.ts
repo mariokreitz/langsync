@@ -5,6 +5,9 @@ describe('createAdapter', () => {
   afterEach(() => {
     delete process.env.LANGSYNC_AI_EXPERIMENTAL;
     delete process.env.OPENAI_API_KEY;
+    delete process.env.DEEPL_API_KEY;
+    delete process.env.ANTHROPIC_API_KEY;
+    delete process.env.GEMINI_API_KEY;
     vi.clearAllMocks();
   });
 
@@ -24,5 +27,18 @@ describe('createAdapter', () => {
 
   it('lists only released providers by default', () => {
     expect(availableProviders()).toEqual(['openai']);
+  });
+
+  it('constructs each experimental adapter when the flag is set', () => {
+    process.env.LANGSYNC_AI_EXPERIMENTAL = '1';
+    expect(createAdapter({ provider: 'deepl', apiKey: 'k:fx' }).provider).toBe('deepl');
+    expect(createAdapter({ provider: 'anthropic', apiKey: 'k' }).provider).toBe('anthropic');
+    expect(createAdapter({ provider: 'gemini', apiKey: 'k' }).provider).toBe('gemini');
+  });
+
+  it('throws for an unknown provider', () => {
+    expect(() =>
+      createAdapter({ provider: 'bogus' as Parameters<typeof createAdapter>[0]['provider'] }),
+    ).toThrow(/unknown ai provider/i);
   });
 });

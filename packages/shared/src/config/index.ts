@@ -28,7 +28,7 @@ export const LangSyncConfigSchema = z.object({
         .string()
         .optional()
         .describe('API key. Falls back to the provider-specific env var.'),
-      model: z.string().optional().describe('Provider model id (e.g. gpt-4o-mini).'),
+      model: z.string().optional().describe('Provider model id (e.g. gpt-5-mini).'),
     })
     .optional()
     .describe('AI translation settings.'),

@@ -1,6 +1,6 @@
 import { type AdapterOptions, type TranslateRequest, type TranslationAdapter } from '../types.js';
 
-const DEFAULT_MODEL = 'gpt-4o-mini';
+const DEFAULT_MODEL = 'gpt-5-mini';
 const ENDPOINT = 'https://api.openai.com/v1/chat/completions';
 
 interface OpenAIChoice {

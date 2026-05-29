@@ -1,5 +1,8 @@
 import { type AdapterOptions, type AIProvider, type TranslationAdapter } from '../types.js';
 import { OpenAIAdapter } from './openai.js';
+import { DeepLAdapter } from './deepl.js';
+import { AnthropicAdapter } from './anthropic.js';
+import { GeminiAdapter } from './gemini.js';
 
 /**
  * Providers that are fully released and shown in CLI help.
@@ -41,10 +44,18 @@ export function createAdapter(options: AdapterOptions): TranslationAdapter {
   switch (provider) {
     case 'openai':
       return new OpenAIAdapter(rest);
-    default:
-      // Released set is validated above; this guards against drift.
-      throw new Error(`AI provider "${provider}" has no adapter implementation yet.`);
+    case 'deepl':
+      return new DeepLAdapter(rest);
+    case 'anthropic':
+      return new AnthropicAdapter(rest);
+    case 'gemini':
+      return new GeminiAdapter(rest);
+    default: {
+      // Exhaustiveness guard: every AIProvider must have a case above.
+      const exhaustive: never = provider;
+      throw new Error(`AI provider "${String(exhaustive)}" has no adapter implementation yet.`);
+    }
   }
 }
 
-export { OpenAIAdapter };
+export { OpenAIAdapter, DeepLAdapter, AnthropicAdapter, GeminiAdapter };
