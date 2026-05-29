@@ -25,6 +25,15 @@ describe('detectFramework', () => {
     expect(await detectFramework('/project')).toBe('i18next');
   });
 
+  it('detects i18next via i18next-vue (Vue binding)', async () => {
+    vol.fromJSON({
+      '/project/package.json': JSON.stringify({
+        dependencies: { 'i18next-vue': '^4.0.0' },
+      }),
+    });
+    expect(await detectFramework('/project')).toBe('i18next');
+  });
+
   it('detects ngx-translate via devDependencies', async () => {
     vol.fromJSON({
       '/project/package.json': JSON.stringify({

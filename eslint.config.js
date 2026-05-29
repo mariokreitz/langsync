@@ -5,7 +5,22 @@ import prettierConfig from 'eslint-config-prettier';
 
 export default tseslint.config(
   {
-    ignores: ['**/dist/**', '**/node_modules/**', '**/coverage/**', '**/.turbo/**', '**/.next/**'],
+    ignores: [
+      '**/dist/**',
+      '**/node_modules/**',
+      '**/coverage/**',
+      '**/.turbo/**',
+      '**/.next/**',
+      // auto-generated / not in any tsconfig
+      'apps/docs/.source/**',
+      'docs/shared/**',
+      // root tooling config files (not TypeScript source)
+      '*.js',
+      'vitest.workspace.ts',
+      // per-package tooling config files
+      '**/tsup.config.ts',
+      '**/vitest.config.ts',
+    ],
   },
   eslint.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,

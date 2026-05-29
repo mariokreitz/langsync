@@ -26,3 +26,30 @@ langsync sync [--dry-run]
 - Existing target values are preserved; the reference never overwrites them.
 - Keys present in the target but missing in the reference are removed.
 - The reference locale file itself is never modified.
+
+## Complete example
+
+Before — `de.json` is missing a key the reference has:
+
+```json title="src/i18n/en.json"
+{ "greeting": { "hello": "Hello", "bye": "Goodbye" } }
+```
+
+```json title="src/i18n/de.json"
+{ "greeting": { "hello": "Hallo" } }
+```
+
+```bash
+$ npx langsync sync
+langsync ✔ Updated src/i18n/de.json
+```
+
+After — the missing key is added as an empty placeholder, the existing
+translation is untouched:
+
+```json title="src/i18n/de.json"
+{ "greeting": { "hello": "Hallo", "bye": "" } }
+```
+
+Run `langsync translate` next to fill `""` automatically, or hand the file to a
+translator via `langsync export excel`.

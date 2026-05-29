@@ -3,29 +3,37 @@ coverage:
     project:
       default:
         target: auto
-        threshold: 1%
+        threshold: 2%
     patch:
       default:
-        target: auto
-        threshold: 1%
+        target: 90%
+        threshold: 0%
 
-  range: '70...90'
+  range: '70...100'
 
 flags:
   cli:
     paths:
       - packages/cli/src
+    carryforward: true
   core:
     paths:
       - packages/core/src
+    carryforward: true
   excel-engine:
     paths:
       - packages/excel-engine/src
+    carryforward: true
+  ai-engine:
+    paths:
+      - packages/ai-engine/src
+    carryforward: true
   shared:
     paths:
       - packages/shared/src
+    carryforward: true
 
 comment:
   layout: 'reach, diff, flags, files'
   behavior: default
-  require_changes: false
+  require_changes: true

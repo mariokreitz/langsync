@@ -7,12 +7,41 @@ import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
 import { Callout } from 'fumadocs-ui/components/callout';
 
 LangSync detects [`i18next`](https://www.i18next.com) automatically when
-any of `i18next`, `react-i18next`, or `vue-i18next` is in your project's
+any of `i18next`, `react-i18next`, or `i18next-vue` is in your project's
 `package.json`.
+
+## Compatibility
+
+| Package         | Version |
+| --------------- | ------- |
+| `i18next`       | >= 23   |
+| `react-i18next` | >= 14   |
+| `i18next-vue`   | >= 4    |
+
+## Try it in 30 seconds
+
+```bash
+# 1. LangSync + i18next (React example)
+npm install i18next react-i18next i18next-http-backend
+npm install -D @mariokreitz/langsync
+
+# 2. Scaffold a typed config (auto-detects i18next)
+npx langsync init
+
+# 3. Check every locale against the reference
+npx langsync validate
+```
 
 ## Locale file layout
 
 LangSync writes nested JSON, which is i18next's default format:
+
+```text
+src/i18n/
+  ├ en.json   ← reference (defaultLocale)
+  ├ de.json
+  └ fr.json
+```
 
 ```json title="src/i18n/en.json"
 {
@@ -27,11 +56,11 @@ LangSync writes nested JSON, which is i18next's default format:
 ```
 
 This works directly with the standard
-[i18next JSON v4 backend](https://www.i18next.com/misc/json-format).
+[i18next JSON v4 format](https://www.i18next.com/misc/json-format).
 
 ## Wire i18next to consume the files
 
-<Tabs items={['react-i18next', 'i18next (vanilla)', 'vue-i18next']}>
+<Tabs items={['react-i18next', 'i18next (vanilla)', 'i18next-vue']}>
 <Tab value="react-i18next">
 
 ```ts title="src/i18n/index.ts"
@@ -49,6 +78,19 @@ i18n
       loadPath: '/locales/{{lng}}.json',
     },
   });
+
+export default i18n;
+```
+
+Use it in a component:
+
+```tsx title="src/components/SaveButton.tsx"
+import { useTranslation } from 'react-i18next';
+
+export function SaveButton() {
+  const { t } = useTranslation();
+  return <button>{t('common.save')}</button>;
+}
 ```
 
 Copy the LangSync-managed files into your public folder during build
@@ -73,26 +115,38 @@ await i18n.init({
     de: { translation: de },
   },
 });
+
+// i18n.t('common.save') === 'Save'
 ```
 
 </Tab>
-<Tab value="vue-i18next">
+<Tab value="i18next-vue">
+
+`i18next-vue` is the maintained Vue 3 binding for i18next (the older
+`vue-i18next` package is deprecated — do not confuse it with `vue-i18n`,
+which is a separate library with its own file format).
 
 ```ts title="src/main.ts"
 import { createApp } from 'vue';
-import { createI18n } from 'vue-i18n';
+import i18next from 'i18next';
+import I18NextVue from 'i18next-vue';
+import App from './App.vue';
 import en from './i18n/en.json';
 import de from './i18n/de.json';
 
-const i18n = createI18n({
-  legacy: false,
-  locale: 'en',
-  fallbackLocale: 'en',
-  messages: { en, de },
+await i18next.init({
+  lng: 'en',
+  fallbackLng: 'en',
+  resources: {
+    en: { translation: en },
+    de: { translation: de },
+  },
 });
 
-createApp(App).use(i18n).mount('#app');
+createApp(App).use(I18NextVue, { i18next }).mount('#app');
 ```
+
+In a template: `<span>{{ $t('common.save') }}</span>`.
 
 </Tab>
 </Tabs>
@@ -120,7 +174,27 @@ export default defineConfig({
 4. Hand off `langsync export excel` to non-technical translators.
 
 <Callout title="i18next interpolation is preserved verbatim">
-  LangSync treats values as opaque strings, so `{{field}}` placeholders,
-  ICU MessageFormat, and HTML tags all round-trip through `sync`,
-  `export excel`, and `import excel` unchanged.
+  LangSync treats values as opaque strings, so `{{ field }}` placeholders, ICU MessageFormat, and
+  HTML tags all round-trip through `sync`, `export excel`, and `import excel` unchanged.
 </Callout>
+
+## Type-safe keys (optional)
+
+i18next can type-check your `t('...')` calls against the reference locale.
+Augment the `i18next` module once and your editor will autocomplete keys and
+flag typos:
+
+```ts title="src/types/i18next.d.ts"
+import 'i18next';
+import type en from '../i18n/en.json';
+
+declare module 'i18next' {
+  interface CustomTypeOptions {
+    defaultNS: 'translation';
+    resources: { translation: typeof en };
+  }
+}
+```
+
+Because LangSync keeps `en.json` complete and in sync, these types stay accurate
+for every locale.

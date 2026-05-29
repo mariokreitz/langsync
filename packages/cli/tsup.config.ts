@@ -5,7 +5,12 @@ import pkg from './package.json' with { type: 'json' };
 // self-contained. Every third-party dep (chalk, commander, exceljs, zod,
 // cosmiconfig, etc.) stays external — it's listed in package.json
 // dependencies and npm resolves it at install time.
-const workspaceDeps = ['@langsync/shared', '@langsync/core', '@langsync/excel-engine'];
+const workspaceDeps = [
+  '@langsync/shared',
+  '@langsync/core',
+  '@langsync/excel-engine',
+  '@langsync/ai-engine',
+];
 const externalDeps = Object.keys(pkg.dependencies ?? {});
 
 export default defineConfig({
@@ -21,6 +26,11 @@ export default defineConfig({
   splitting: false,
   treeshake: true,
   shims: false,
+  // Single source of truth for the version: packages/cli/package.json
+  // (bumped by Changesets). Injected so `--version` and the banner never drift.
+  define: {
+    __LANGSYNC_VERSION__: JSON.stringify(pkg.version),
+  },
   banner: ({ format }) => {
     if (format === 'esm') {
       return { js: '#!/usr/bin/env node' };

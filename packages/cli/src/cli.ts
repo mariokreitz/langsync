@@ -8,8 +8,14 @@ import { registerValidateCommand } from './commands/validate.js';
 import { registerFindMissingCommand } from './commands/find-missing.js';
 import { registerExportCommand } from './commands/export.js';
 import { registerImportCommand } from './commands/import.js';
+import { registerTranslateCommand } from './commands/translate.js';
+import { registerWatchCommand } from './commands/watch.js';
 
-const VERSION = '0.0.0';
+// Replaced at build time by tsup `define` with the version from package.json
+// (the single source of truth, bumped by Changesets). The fallback only applies
+// when running unbundled (e.g. via tsx in tests).
+declare const __LANGSYNC_VERSION__: string;
+const VERSION = typeof __LANGSYNC_VERSION__ === 'string' ? __LANGSYNC_VERSION__ : '0.0.0-dev';
 
 async function main(): Promise<void> {
   assertNodeVersion(22);
@@ -28,6 +34,8 @@ async function main(): Promise<void> {
   registerSyncCommand(program);
   registerValidateCommand(program);
   registerFindMissingCommand(program);
+  registerTranslateCommand(program);
+  registerWatchCommand(program);
   registerExportCommand(program);
   registerImportCommand(program);
 

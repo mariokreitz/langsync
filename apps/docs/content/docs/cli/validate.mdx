@@ -45,3 +45,26 @@ langsync validate --reporter json
   "issues": [{ "type": "missing", "locale": "de", "key": "greeting.bye" }]
 }
 ```
+
+## Complete example
+
+Given these files:
+
+```json title="src/i18n/en.json"
+{ "greeting": { "hello": "Hello", "bye": "Goodbye" } }
+```
+
+```json title="src/i18n/de.json"
+{ "greeting": { "hello": "Hallo" } }
+```
+
+Running validate:
+
+```bash
+$ npx langsync validate
+langsync ℹ missing  de  greeting.bye
+langsync ℹ Summary: 1 missing, 0 extra, 0 empty
+```
+
+The command exits with code `1` because `de` is missing `greeting.bye`, so the
+PR check fails until the key is added (e.g. via `langsync sync`).

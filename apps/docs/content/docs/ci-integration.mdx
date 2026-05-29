@@ -13,6 +13,43 @@ quality gate.
 Pair with `--reporter json` if you want machine-readable output for
 custom annotations or PR comments.
 
+## Official GitHub Action
+
+For GitHub, the quickest setup is the composite `langsync` action. It runs
+`validate`, optionally posts a summary comment on the pull request, and fails
+the job when issues are found.
+
+```yaml title=".github/workflows/i18n.yml"
+name: i18n
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: mariokreitz/langsync/packages/github-action@v2
+        with:
+          working-directory: .
+          fail-on-issues: true
+          comment: true
+```
+
+<Callout title="AI translate in CI">
+  The action ships `validate` only. Running `langsync translate` in CI is deferred to a later
+  release while API-key secret handling is finalized.
+</Callout>
+
 ## GitHub Actions
 
 ```yaml title=".github/workflows/i18n.yml"
@@ -46,9 +83,8 @@ jobs:
 ```
 
 <Callout title="Why Corepack?">
-  Corepack reads the `packageManager` field from your `package.json` and
-  provisions the exact pnpm/yarn version. It's bundled with Node 22, so no
-  third-party setup action is required.
+  Corepack reads the `packageManager` field from your `package.json` and provisions the exact
+  pnpm/yarn version. It's bundled with Node 22, so no third-party setup action is required.
 </Callout>
 
 ## GitLab CI
@@ -94,7 +130,7 @@ The JSON reporter's output is small enough to render inline in a PR
 comment. Combine `langsync validate --reporter json` with
 [`actions/github-script`](https://github.com/actions/github-script):
 
-```yaml
+````yaml
 - name: Run validate
   id: validate
   continue-on-error: true
@@ -114,18 +150,17 @@ comment. Combine `langsync validate --reporter json` with
         issue_number: context.issue.number,
         body: `**LangSync validation failed**\n\n${body}`,
       });
-```
+````
 
 ## Exit codes recap
 
-| Command         | Exit 0                       | Exit 1                                          |
-| --------------- | ---------------------------- | ----------------------------------------------- |
-| `validate`      | No `missing` or `extra` keys | Any `missing` / `extra` key (or runtime error)  |
-| `find-missing`  | No missing keys              | At least one locale missing keys                |
-| `sync`          | Always (use `--dry-run` to preview)                                              ||
-| `export excel`  | Always                                                                            ||
-| `import excel`  | Always                                                                            ||
+| Command        | Exit 0                              | Exit 1                                         |
+| -------------- | ----------------------------------- | ---------------------------------------------- |
+| `validate`     | No `missing` or `extra` keys        | Any `missing` / `extra` key (or runtime error) |
+| `find-missing` | No missing keys                     | At least one locale missing keys               |
+| `sync`         | Always (use `--dry-run` to preview) |                                                |
+| `export excel` | Always                              |                                                |
+| `import excel` | Always                              |                                                |
 
 Empty values (`""`) are reported as **warnings** by `validate` — they do
 not change the exit code.
-

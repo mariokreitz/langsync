@@ -1,6 +1,6 @@
 {
   "name": "@mariokreitz/langsync",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Modern localization workflow tooling for TypeScript applications.",
   "keywords": [
     "i18n",
@@ -10,7 +10,10 @@
     "cli",
     "i18next",
     "ngx-translate",
-    "react-intl"
+    "react-intl",
+    "ai-translation",
+    "openai",
+    "watch-mode"
   ],
   "license": "MIT",
   "author": "Mario Kreitz",
@@ -19,7 +22,7 @@
     "url": "git+https://github.com/mariokreitz/langsync.git",
     "directory": "packages/cli"
   },
-  "homepage": "https://github.com/mariokreitz/langsync#readme",
+  "homepage": "https://docs.langsync.kreitz-webdev.de",
   "bugs": {
     "url": "https://github.com/mariokreitz/langsync/issues"
   },
@@ -58,6 +61,7 @@
   },
   "dependencies": {
     "chalk": "catalog:",
+    "chokidar": "catalog:",
     "commander": "catalog:",
     "cosmiconfig": "catalog:",
     "cosmiconfig-typescript-loader": "^6.1.0",
@@ -71,6 +75,7 @@
     "@langsync/shared": "workspace:*",
     "@langsync/core": "workspace:*",
     "@langsync/excel-engine": "workspace:*",
+    "@langsync/ai-engine": "workspace:*",
     "@types/prompts": "^2.4.9",
     "memfs": "^4.15.1"
   }

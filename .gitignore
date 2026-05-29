@@ -42,4 +42,8 @@ out/
 # Local planning / roadmap
 langsync-roadmap.md
 v1-plan.md
+v2-plan.md
 *.plan.md
+
+# Turborepo
+.turbo

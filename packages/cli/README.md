@@ -18,10 +18,16 @@ chaos of hand-edited JSON or fragile Excel hand-offs.
 
 ## Install
 
+<!-- embedme ../../docs/shared/install.sh -->
+
 ```bash
 pnpm add -D @mariokreitz/langsync
-# or: npm install -D @mariokreitz/langsync
-# or: yarn add -D @mariokreitz/langsync
+# or
+npm install -D @mariokreitz/langsync
+# or
+yarn add -D @mariokreitz/langsync
+
+
 ```
 
 > Requires **Node.js 22+** and an ESM-compatible project.
@@ -38,10 +44,13 @@ npx langsync validate
 # 3. Add missing keys (empty placeholders) to non-reference locales
 npx langsync sync
 
-# 4. Hand off to translators via Excel
+# 4. Optionally fill the gaps with AI
+npx langsync translate
+
+# 5. Hand off to translators via Excel
 npx langsync export excel
 
-# 5. Import their work back
+# 6. Import their work back
 npx langsync import excel
 ```
 
@@ -53,6 +62,8 @@ npx langsync import excel
 | `langsync validate`     | Report missing, extra, and empty keys; exits non-zero on errors.    |
 | `langsync find-missing` | Report missing keys per locale; exits non-zero on errors.           |
 | `langsync sync`         | Synchronize keys from the reference locale into every other locale. |
+| `langsync translate`    | Fill empty values in non-reference locales using an AI provider.    |
+| `langsync watch`        | Watch locale files and run incremental sync + validation on change. |
 | `langsync export excel` | Export all locales into a single `.xlsx` workbook.                  |
 | `langsync import excel` | Import translations from a workbook back into JSON files.           |
 
@@ -61,8 +72,9 @@ All read commands support `--reporter json`. All write commands support
 
 ## Configuration
 
+<!-- embedme ../../docs/shared/config.ts -->
+
 ```ts
-// langsync.config.ts
 import { defineConfig } from '@mariokreitz/langsync';
 
 export default defineConfig({
@@ -71,6 +83,14 @@ export default defineConfig({
   locales: ['en', 'de', 'fr'],
   defaultLocale: 'en',
   framework: 'i18next',
+  excel: {
+    file: 'translations.xlsx',
+    sheetName: 'Translations',
+  },
+  ai: {
+    provider: 'openai',
+    model: 'gpt-4o-mini',
+  },
 });
 ```
 

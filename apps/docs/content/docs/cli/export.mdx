@@ -40,3 +40,14 @@ Row 1 is a header row:
 - Column A contains the flattened (dot-notated) key.
 - Subsequent columns contain values per locale, in the order configured.
 - Keys are sorted alphabetically.
+
+### Complete example
+
+```bash
+$ npx langsync export excel
+langsync ✔ Wrote translations.xlsx (12 keys, 3 locales)
+```
+
+Open `translations.xlsx`, hand it to a translator, and when it comes back run
+[`langsync import excel`](./import) to merge the values straight back into your
+locale JSON files.

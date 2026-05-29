@@ -19,6 +19,10 @@ spreadsheet round-trip when they need one.
 - **Lossless Excel I/O.** Export every locale into one workbook, hand it to a
   translator, import their work back. Keys are preserved, structure is
   preserved.
+- **AI-assisted translation.** Fill empty values automatically with a pluggable
+  provider (`langsync translate`) — OpenAI today, more on the way.
+- **Watch mode.** Keep locales in sync as you type with `langsync watch`:
+  incremental sync plus validation on every save.
 - **Framework integrations.** Auto-detects [`i18next`](./integrations/i18next),
   [`ngx-translate`](./integrations/ngx-translate), and
   [`react-intl`](./integrations/react-intl) from your `package.json`.
@@ -54,6 +58,6 @@ collaborators when needed.
 - [Installation](./installation) — install with pnpm, npm, or yarn.
 - [Configuration](./configuration) — every option, every file format.
 - [CLI Reference](./cli/init) — `init`, `validate`, `sync`, `find-missing`,
-  `export excel`, `import excel`.
+  `translate`, `watch`, `export excel`, `import excel`.
 - [Integrations](./integrations/i18next) — recipes for `i18next`,
   `ngx-translate`, and `react-intl`.

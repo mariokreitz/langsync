@@ -21,6 +21,7 @@ catalog:
   prompts: ^2.4.2
   listr2: ^8.2.5
   exceljs: ^4.4.0
+  chokidar: ^4.0.3
   zod: ^3.24.1
   cosmiconfig: ^9.0.0
   vitest: ^2.1.8

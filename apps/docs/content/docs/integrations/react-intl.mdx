@@ -10,6 +10,28 @@ LangSync detects [`react-intl`](https://formatjs.io/docs/react-intl/) (and
 `@formatjs/intl`) automatically when either is present in your project's
 `package.json`.
 
+## Compatibility
+
+| Package          | Version |
+| ---------------- | ------- |
+| `react-intl`     | >= 6    |
+| `@formatjs/intl` | >= 2    |
+| React            | >= 18   |
+
+## Try it in 30 seconds
+
+```bash
+# 1. LangSync + react-intl
+npm install react-intl
+npm install -D @mariokreitz/langsync
+
+# 2. Scaffold a typed config (auto-detects react-intl)
+npx langsync init
+
+# 3. Check every locale against the reference
+npx langsync validate
+```
+
 ## Locale file layout
 
 `react-intl` consumes flat message-id maps. LangSync writes nested JSON by
@@ -95,6 +117,31 @@ export function AppRoot({ children }: { children: React.ReactNode }) {
   );
 }
 ```
+
+Then reference messages anywhere below the provider, either declaratively with
+`FormattedMessage` or imperatively with the `useIntl` hook:
+
+```tsx title="src/components/CheckoutHeader.tsx"
+import { FormattedMessage, useIntl } from 'react-intl';
+
+export function CheckoutHeader({ amount }: { amount: number }) {
+  const intl = useIntl();
+  return (
+    <header>
+      <h1>
+        <FormattedMessage id="checkout.title" defaultMessage="Checkout" />
+      </h1>
+      <p>{intl.formatMessage({ id: 'checkout.total' }, { amount })}</p>
+    </header>
+  );
+}
+```
+
+<Callout title="Result">
+  `react-intl` resolves each `id` against the flat message map LangSync keeps in sync. Missing ids
+  surface in development as console warnings — and as `missing` issues when you run `langsync
+  validate`.
+</Callout>
 
 ## Recommended workflow
 

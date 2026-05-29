@@ -1,0 +1,73 @@
+name: 'LangSync Validate'
+description: 'Validate i18n translations: report missing, extra, and empty keys, and optionally comment on the PR.'
+author: 'Mario Kreitz'
+branding:
+  icon: 'globe'
+  color: 'blue'
+
+inputs:
+  working-directory:
+    description: 'Directory to run LangSync in (where langsync.config.* lives).'
+    required: false
+    default: '.'
+  version:
+    description: 'Version of @mariokreitz/langsync to run via npx (e.g. "0.2.0" or "latest").'
+    required: false
+    default: 'latest'
+  fail-on-issues:
+    description: 'Fail the job when missing/extra issues are found.'
+    required: false
+    default: 'true'
+  comment:
+    description: 'Post a summary comment on the pull request.'
+    required: false
+    default: 'true'
+  github-token:
+    description: 'Token used to post the PR comment.'
+    required: false
+    default: ${{ github.token }}
+
+outputs:
+  report:
+    description: 'The JSON validation report.'
+    value: ${{ steps.validate.outputs.report }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Run langsync validate
+      id: validate
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        set +e
+        REPORT=$(npx -y "@mariokreitz/langsync@${{ inputs.version }}" validate --reporter json)
+        STATUS=$?
+        set -e
+        echo "status=$STATUS" >> "$GITHUB_OUTPUT"
+        {
+          echo "report<<LANGSYNC_EOF"
+          echo "$REPORT"
+          echo "LANGSYNC_EOF"
+        } >> "$GITHUB_OUTPUT"
+        echo "$REPORT"
+
+    - name: Comment on pull request
+      if: ${{ inputs.comment == 'true' && github.event_name == 'pull_request' }}
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+        REPORT: ${{ steps.validate.outputs.report }}
+      run: |
+        COUNT=$(echo "$REPORT" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{console.log((JSON.parse(s).issues||[]).length)}catch{console.log("0")}})')
+        BODY="### LangSync validation\n\n${COUNT} issue(s) found.\n\n<details><summary>Report</summary>\n\n\`\`\`json\n${REPORT}\n\`\`\`\n\n</details>"
+        printf "%b" "$BODY" | gh pr comment "${{ github.event.pull_request.number }}" --body-file -
+
+    - name: Fail on issues
+      if: ${{ inputs.fail-on-issues == 'true' }}
+      shell: bash
+      run: |
+        if [ "${{ steps.validate.outputs.status }}" != "0" ]; then
+          echo "::error::LangSync found translation issues."
+          exit 1
+        fi

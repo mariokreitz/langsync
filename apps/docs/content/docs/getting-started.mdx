@@ -82,7 +82,7 @@ yarn langsync init
 You'll see something like:
 
 ```text
-  LangSync  v0.1.1
+  LangSync  v0.2.x
   Modern localization workflow tooling.
 
 - Detecting i18n framework…
@@ -99,8 +99,8 @@ You'll see something like:
 ```
 
 <Callout type="info">
-  Pass `--yes` to skip every prompt and accept defaults, or `--force` to
-  overwrite an existing config.
+  Pass `--yes` to skip every prompt and accept defaults, or `--force` to overwrite an existing
+  config.
 </Callout>
 
 </Step>
@@ -194,6 +194,42 @@ writing.
 </Step>
 <Step>
 
+### Fill the gaps with AI (optional)
+
+Let LangSync translate the empty placeholders for you. Configure a provider in
+`langsync.config.ts` (`ai.provider`, defaults to `openai`) and set the matching
+API key (for OpenAI, `OPENAI_API_KEY`):
+
+<Tabs items={['pnpm', 'npm', 'yarn']}>
+<Tab value="pnpm">
+
+```bash
+OPENAI_API_KEY=sk-... pnpm langsync translate
+```
+
+</Tab>
+<Tab value="npm">
+
+```bash
+OPENAI_API_KEY=sk-... npx langsync translate
+```
+
+</Tab>
+<Tab value="yarn">
+
+```bash
+OPENAI_API_KEY=sk-... yarn langsync translate
+```
+
+</Tab>
+</Tabs>
+
+Only empty values are filled; your existing translations are never overwritten.
+Use `--dry-run` to preview, or `--provider` to override the configured one.
+
+</Step>
+<Step>
+
 ### Hand off to translators (optional)
 
 Export every locale into a single Excel workbook a non-technical
@@ -256,5 +292,7 @@ yarn langsync import excel
 
 - Wire `langsync validate --reporter json` into your CI — see the
   [validate command reference](./cli/validate) for the exact recipe.
+- Automate empty-value translation with [`langsync translate`](./cli/translate).
+- Keep locales in sync while you code with [`langsync watch`](./cli/watch).
 - Tune your setup with the full [Configuration](./configuration) reference.
 - Read the [Integrations](./integrations/i18next) page for your framework.

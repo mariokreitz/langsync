@@ -18,6 +18,20 @@ export const LangSyncConfigSchema = z.object({
       sheetName: z.string().default('Translations'),
     })
     .optional(),
+  ai: z
+    .object({
+      provider: z
+        .enum(['openai', 'deepl', 'anthropic', 'gemini'])
+        .default('openai')
+        .describe('AI translation provider.'),
+      apiKey: z
+        .string()
+        .optional()
+        .describe('API key. Falls back to the provider-specific env var.'),
+      model: z.string().optional().describe('Provider model id (e.g. gpt-4o-mini).'),
+    })
+    .optional()
+    .describe('AI translation settings.'),
 });
 
 export type LangSyncConfig = z.infer<typeof LangSyncConfigSchema>;

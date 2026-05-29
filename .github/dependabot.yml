@@ -1,0 +1,49 @@
+version: 2
+
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '09:00'
+      timezone: Europe/Berlin
+    groups:
+      production-dependencies:
+        dependency-type: production
+        update-types: [minor, patch]
+      development-dependencies:
+        dependency-type: development
+        update-types: [minor, patch]
+    labels:
+      - dependencies
+    open-pull-requests-limit: 10
+    ignore:
+      - dependency-name: '*'
+        update-types: ['version-update:semver-major']
+
+  - package-ecosystem: github-actions
+    directory: /.github/workflows
+    schedule:
+      interval: weekly
+      day: monday
+      time: '09:00'
+      timezone: Europe/Berlin
+    groups:
+      github-actions:
+        patterns:
+          - '*'
+    labels:
+      - github-actions
+      - dependencies
+
+  - package-ecosystem: docker
+    directory: /apps/docs
+    schedule:
+      interval: weekly
+      day: monday
+      time: '09:00'
+      timezone: Europe/Berlin
+    labels:
+      - docker
+      - dependencies

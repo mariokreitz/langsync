@@ -1,0 +1,29 @@
+---
+title: langsync watch
+description: Watch locale files and run incremental sync plus validation on change.
+---
+
+`langsync watch` monitors your input directory and, on every change, runs an
+incremental sync followed by validation. It prints a compact summary so you get
+instant feedback while editing translations.
+
+## Usage
+
+```bash
+langsync watch [--dry-run] [--debounce <ms>]
+```
+
+## Flags
+
+| Flag              | Default | Description                                         |
+| ----------------- | ------- | --------------------------------------------------- |
+| `--dry-run`       | `false` | Report planned writes without modifying files.      |
+| `--debounce <ms>` | `200`   | Debounce window for rapid, successive file changes. |
+
+## Behavior
+
+- An initial pass runs immediately so you see the current state.
+- File changes are debounced to coalesce rapid saves.
+- Each pass syncs keys from the reference locale, then validates all locales.
+- Only changed locale files are written (incremental sync).
+- Press `Ctrl+C` to stop watching.

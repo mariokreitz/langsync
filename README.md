@@ -42,12 +42,16 @@ consistent across every locale and every collaborator.
 
 ### Install
 
+<!-- embedme docs/shared/install.sh -->
+
 ```bash
 pnpm add -D @mariokreitz/langsync
 # or
 npm install -D @mariokreitz/langsync
 # or
 yarn add -D @mariokreitz/langsync
+
+
 ```
 
 > Requires **Node.js 22+** and an ESM-compatible project.
@@ -88,6 +92,8 @@ npx langsync sync
 | `langsync validate`     | Report missing, extra, and empty keys; exits non-zero on errors.    |
 | `langsync find-missing` | Report missing keys per locale; exits non-zero on errors.           |
 | `langsync sync`         | Synchronize keys from the reference locale into every other locale. |
+| `langsync translate`    | Fill empty values in non-reference locales using an AI provider.    |
+| `langsync watch`        | Watch locale files and run incremental sync + validation on change. |
 | `langsync export excel` | Export all locales into a single `.xlsx` workbook.                  |
 | `langsync import excel` | Import translations from a workbook back into JSON files.           |
 
@@ -99,6 +105,8 @@ commands support `--dry-run` for safe previews.
 ## Configuration
 
 Create a `langsync.config.ts` at the project root:
+
+<!-- embedme docs/shared/config.ts -->
 
 ```ts
 import { defineConfig } from '@mariokreitz/langsync';
@@ -113,6 +121,10 @@ export default defineConfig({
     file: 'translations.xlsx',
     sheetName: 'Translations',
   },
+  ai: {
+    provider: 'openai',
+    model: 'gpt-4o-mini',
+  },
 });
 ```
 
@@ -125,6 +137,9 @@ export default defineConfig({
 | `framework`       | `string`   | no       | One of `i18next`, `ngx-translate`, `react-intl`. |
 | `excel.file`      | `string`   | no       | Excel filename (default `translations.xlsx`).    |
 | `excel.sheetName` | `string`   | no       | Worksheet name (default `Translations`).         |
+| `ai.provider`     | `string`   | no       | One of `openai`, `deepl`, `anthropic`, `gemini`. |
+| `ai.apiKey`       | `string`   | no       | API key (falls back to a provider env var).      |
+| `ai.model`        | `string`   | no       | Provider model id (e.g. `gpt-4o-mini`).          |
 
 JSON, JS, and MJS config files are also supported via cosmiconfig.
 
@@ -175,6 +190,7 @@ packages/
   cli/            # The `langsync` CLI (published to npm)
   core/           # Parsers, validators, sync engine
   excel-engine/   # Excel (xlsx) import/export
+  ai-engine/      # AI translation adapters (OpenAI, DeepL, Anthropic, Gemini)
   shared/         # Types, config loader, fs helpers, logger
 apps/
   docs/           # Documentation site
@@ -184,14 +200,18 @@ apps/
 
 ## Roadmap
 
-V1 (this release) ships the full local workflow: init, validate, sync,
-find-missing, Excel I/O, and framework detection.
+V1 shipped the full local workflow: init, validate, sync, find-missing, Excel
+I/O, and framework detection.
+
+V2 (current) adds:
+
+- AI-assisted translation (`langsync translate`) with pluggable providers
+  (OpenAI first; DeepL, Anthropic, and Gemini follow).
+- Watch mode and incremental sync (`langsync watch`).
+- A reusable composite GitHub Action for `validate` and `find-missing`.
 
 Future releases will add:
 
-- AI-assisted translation (OpenAI / DeepL)
-- Watch mode and incremental sync
-- A reusable GitHub Action
 - A VSCode extension
 - A web dashboard for translator collaboration
 

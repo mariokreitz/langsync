@@ -1,0 +1,20 @@
+{
+  "name": "@langsync/github-action",
+  "version": "0.1.0",
+  "description": "Composite GitHub Action that validates i18n translations with LangSync.",
+  "license": "MIT",
+  "author": "Mario Kreitz",
+  "private": true,
+  "type": "module",
+  "files": [
+    "action.yml",
+    "README.md"
+  ],
+  "scripts": {
+    "lint": "true",
+    "typecheck": "true",
+    "test": "true",
+    "build": "true",
+    "clean": "true"
+  }
+}

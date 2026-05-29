@@ -3,16 +3,55 @@ title: ngx-translate
 description: Using LangSync with @ngx-translate/core in Angular projects.
 ---
 
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
 import { Callout } from 'fumadocs-ui/components/callout';
+import { Step, Steps } from 'fumadocs-ui/components/steps';
 
-LangSync detects [`@ngx-translate/core`](https://github.com/ngx-translate/core)
-or `@ngx-translate/http-loader` automatically when present in your Angular
-project's `package.json`.
+LangSync detects [`@ngx-translate/core`](https://ngx-translate.org) automatically
+when it (or `@ngx-translate/http-loader`) is in your Angular project's
+`package.json`.
+
+## Compatibility
+
+| Package                      | Version |
+| ---------------------------- | ------- |
+| `@ngx-translate/core`        | >= 17   |
+| `@ngx-translate/http-loader` | >= 17   |
+| Angular                      | >= 20   |
+
+<Callout type="info">
+  ngx-translate 17 is the current release (v16 and earlier are end-of-life). It uses the
+  standalone-first, functional provider API (`provideTranslateService` +
+  `provideTranslateHttpLoader`) and `fallbackLang` instead of the old `defaultLanguage`. The setup
+  below reflects that API. If you are still on an older, NgModule-based version, see the [legacy
+  NgModule setup](#legacy-ngmodule-older-versions).
+</Callout>
+
+## Try it in 30 seconds
+
+```bash
+# 1. LangSync + the ngx-translate HTTP loader
+npm install @ngx-translate/core @ngx-translate/http-loader
+npm install -D @mariokreitz/langsync
+
+# 2. Scaffold a typed config (auto-detects ngx-translate)
+npx langsync init
+
+# 3. Check every locale against the reference
+npx langsync validate
+```
 
 ## Locale file layout
 
-`ngx-translate` uses nested JSON files served via HTTP. LangSync writes the
-same format.
+`ngx-translate` loads one nested JSON file per locale over HTTP. LangSync writes
+the exact same format, so files round-trip without transformation.
+
+```text
+src/assets/i18n/
+  ├ en.json   ← reference (defaultLocale)
+  ├ de.json
+  └ fr.json
+```
 
 ```json title="src/assets/i18n/en.json"
 {
@@ -23,9 +62,15 @@ same format.
 }
 ```
 
-## Suggested LangSync config
+## Setup
 
-`ngx-translate` typically loads files from `src/assets/i18n/<locale>.json`:
+<Steps>
+<Step>
+
+### Configure LangSync
+
+Point `input` at the directory ngx-translate serves from
+(`src/assets/i18n` by convention):
 
 ```ts title="langsync.config.ts"
 import { defineConfig } from '@mariokreitz/langsync';
@@ -39,42 +84,109 @@ export default defineConfig({
 });
 ```
 
-## Wire ngx-translate to consume the files
+</Step>
+<Step>
+
+### Wire ngx-translate to consume the files
+
+Use the functional `provideTranslateHttpLoader` from `@ngx-translate/http-loader`
+(v16+). No custom factory or `deps` array is required anymore.
 
 ```ts title="src/app/app.config.ts"
-import { provideHttpClient } from '@angular/common/http';
-import { provideTranslateService, TranslateLoader } from '@ngx-translate/core';
-import { TranslateHttpLoader } from '@ngx-translate/http-loader';
-import { HttpClient } from '@angular/common/http';
+import { ApplicationConfig } from '@angular/core';
+import { provideHttpClient, withFetch } from '@angular/common/http';
+import { provideTranslateService } from '@ngx-translate/core';
+import { provideTranslateHttpLoader } from '@ngx-translate/http-loader';
 
-export const appConfig = {
+export const appConfig: ApplicationConfig = {
   providers: [
-    provideHttpClient(),
+    provideHttpClient(withFetch()),
     provideTranslateService({
-      defaultLanguage: 'en',
-      loader: {
-        provide: TranslateLoader,
-        useFactory: (http: HttpClient) =>
-          new TranslateHttpLoader(http, './assets/i18n/', '.json'),
-        deps: [HttpClient],
-      },
+      loader: provideTranslateHttpLoader({
+        prefix: './assets/i18n/',
+        suffix: '.json',
+      }),
+      lang: 'en',
+      fallbackLang: 'en',
     }),
   ],
 };
 ```
 
+<Callout title="Result">
+  Angular now loads `./assets/i18n/<lang>.json` on demand. The keys you manage
+  with LangSync are immediately available to the `translate` pipe and service.
+</Callout>
+
+</Step>
+<Step>
+
+### Use translations in a component
+
+```ts title="src/app/home.component.ts"
+import { Component } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
+
+@Component({
+  selector: 'app-home',
+  standalone: true,
+  imports: [TranslatePipe],
+  template: `
+    <h1>{{ 'HOME.TITLE' | translate }}</h1>
+    <p>{{ 'HOME.SUBTITLE' | translate }}</p>
+  `,
+})
+export class HomeComponent {}
+```
+
+</Step>
+</Steps>
+
 ## Recommended workflow
 
 1. Edit keys in `src/assets/i18n/en.json` as you build new features.
-2. `langsync sync` keeps the other locales aligned with empty placeholders.
-3. `langsync validate --reporter json` gates pull requests.
-4. `langsync export excel` produces a workbook for translators; `import excel`
-   merges their work back in place.
+2. Run `langsync sync` to add the same keys to every other locale as empty
+   placeholders.
+3. Run `langsync translate` to fill those placeholders with AI suggestions
+   (optional).
+4. Run `langsync validate --reporter json` in CI to fail PRs that drift.
+5. Run `langsync export excel` for a translator handoff, then `import excel` to
+   merge their work back.
+
+## Legacy NgModule (older versions)
+
+If you are on an older, NgModule-based ngx-translate version, register a
+`TranslateHttpLoader` factory in `forRoot`. LangSync's file layout is identical,
+so only the wiring differs.
+
+```ts title="src/app/app.module.ts"
+import { NgModule } from '@angular/core';
+import { HttpClient, provideHttpClient } from '@angular/common/http';
+import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
+import { TranslateHttpLoader } from '@ngx-translate/http-loader';
+
+export function HttpLoaderFactory(http: HttpClient): TranslateHttpLoader {
+  return new TranslateHttpLoader(http, './assets/i18n/', '.json');
+}
+
+@NgModule({
+  imports: [
+    TranslateModule.forRoot({
+      defaultLanguage: 'en',
+      loader: {
+        provide: TranslateLoader,
+        useFactory: HttpLoaderFactory,
+        deps: [HttpClient],
+      },
+    }),
+  ],
+  providers: [provideHttpClient()],
+})
+export class AppModule {}
+```
 
 <Callout title="Angular file hashing">
-  Angular's build pipeline emits hashed filenames for files in
-  `src/assets/`. The hashes are computed at build time from the JSON
-  content — running `langsync sync` or `langsync import excel` updates the
-  content, which updates the hash on the next build automatically. No extra
-  configuration needed.
+  Angular's build pipeline emits hashed filenames for files in `src/assets/`. The hashes are
+  computed at build time from the JSON content, so running `langsync sync` or `langsync import
+  excel` updates the hash automatically on the next build. No extra configuration needed.
 </Callout>

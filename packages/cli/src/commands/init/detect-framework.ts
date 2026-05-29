@@ -12,7 +12,7 @@ const FRAMEWORK_SIGNATURES: readonly {
   framework: I18nFramework;
   packages: readonly string[];
 }[] = [
-  { framework: 'i18next', packages: ['i18next', 'react-i18next', 'vue-i18next'] },
+  { framework: 'i18next', packages: ['i18next', 'react-i18next', 'i18next-vue', 'vue-i18next'] },
   { framework: 'ngx-translate', packages: ['@ngx-translate/core', '@ngx-translate/http-loader'] },
   { framework: 'react-intl', packages: ['react-intl', '@formatjs/intl'] },
 ];

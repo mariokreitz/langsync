@@ -35,6 +35,10 @@ export default defineConfig({
     file: 'translations.xlsx',
     sheetName: 'Translations',
   },
+  ai: {
+    provider: 'openai',
+    model: 'gpt-4o-mini',
+  },
 });
 ```
 
@@ -101,21 +105,35 @@ export default defineConfig({
 
 ### Top-level
 
-| Option          | Type       | Required | Default                  | Description                                          |
-| --------------- | ---------- | -------- | ------------------------ | ---------------------------------------------------- |
-| `input`         | `string`   | yes      | —                        | Directory containing per-locale JSON files.          |
-| `output`        | `string`   | yes      | —                        | Output directory for Excel exports and reports.      |
-| `locales`       | `string[]` | yes      | —                        | List of locale codes you support.                    |
-| `defaultLocale` | `string`   | no       | First entry in `locales` | Reference locale used by `validate` and `sync`.      |
+| Option          | Type       | Required | Default                  | Description                                              |
+| --------------- | ---------- | -------- | ------------------------ | -------------------------------------------------------- |
+| `input`         | `string`   | yes      | —                        | Directory containing per-locale JSON files.              |
+| `output`        | `string`   | yes      | —                        | Output directory for Excel exports and reports.          |
+| `locales`       | `string[]` | yes      | —                        | List of locale codes you support.                        |
+| `defaultLocale` | `string`   | no       | First entry in `locales` | Reference locale used by `validate` and `sync`.          |
 | `framework`     | `string`   | no       | `none`                   | One of `i18next`, `ngx-translate`, `react-intl`, `none`. |
-| `excel`         | `object`   | no       | see below                | Excel I/O settings.                                  |
+| `excel`         | `object`   | no       | see below                | Excel I/O settings.                                      |
+| `ai`            | `object`   | no       | see below                | AI translation settings (used by `translate`).           |
 
 ### `excel`
 
-| Option      | Type     | Default            | Description                                  |
-| ----------- | -------- | ------------------ | -------------------------------------------- |
-| `file`      | `string` | `translations.xlsx`| Path (relative to project root) of the workbook. |
-| `sheetName` | `string` | `Translations`     | Worksheet name inside the workbook.          |
+| Option      | Type     | Default             | Description                                      |
+| ----------- | -------- | ------------------- | ------------------------------------------------ |
+| `file`      | `string` | `translations.xlsx` | Path (relative to project root) of the workbook. |
+| `sheetName` | `string` | `Translations`      | Worksheet name inside the workbook.              |
+
+### `ai`
+
+| Option     | Type     | Default          | Description                                               |
+| ---------- | -------- | ---------------- | --------------------------------------------------------- |
+| `provider` | `string` | `openai`         | One of `openai`, `deepl`, `anthropic`, `gemini`.          |
+| `apiKey`   | `string` | —                | API key. Falls back to the provider env var when omitted. |
+| `model`    | `string` | provider default | Provider model id (e.g. `gpt-4o-mini`).                   |
+
+<Callout title="Provider availability">
+  Only `openai` is released today. `deepl`, `anthropic`, and `gemini` are gated behind
+  `LANGSYNC_AI_EXPERIMENTAL=1` until they ship.
+</Callout>
 
 ## Locale file layout
 
@@ -142,9 +160,9 @@ Each file is a free-form nested JSON tree. Keys are dot-notated internally
 ```
 
 <Callout title="Missing files are tolerated">
-  If a configured locale file doesn't exist on disk yet, LangSync treats it
-  as an empty tree and reports every reference key as `missing` (instead of
-  crashing). Run `langsync sync` to scaffold it with empty placeholders.
+  If a configured locale file doesn't exist on disk yet, LangSync treats it as an empty tree and
+  reports every reference key as `missing` (instead of crashing). Run `langsync sync` to scaffold it
+  with empty placeholders.
 </Callout>
 
 ## Resolution order
