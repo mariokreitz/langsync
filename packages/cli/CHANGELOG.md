@@ -1,5 +1,20 @@
 # @mariokreitz/langsync
 
+## 0.3.0
+
+### Minor Changes
+
+- 9ae0326: Add V2 features: `langsync translate` (AI-assisted translation with a pluggable
+  provider adapter — OpenAI released; DeepL, Anthropic, and Gemini behind a flag)
+  and `langsync watch` (incremental sync + validation on file change). Adds `ai`
+  configuration options and a composite GitHub Action for `validate` in CI.
+
+### Patch Changes
+
+- 9ae0326: Detect `i18next-vue` (the maintained Vue 3 binding for i18next) during
+  `langsync init`, alongside the existing `i18next` / `react-i18next` /
+  `vue-i18next` signatures.
+
 ## 0.1.0
 
 ### Minor Changes
