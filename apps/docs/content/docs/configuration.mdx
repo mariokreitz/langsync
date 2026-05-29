@@ -37,7 +37,7 @@ export default defineConfig({
   },
   ai: {
     provider: 'openai',
-    model: 'gpt-4o-mini',
+    model: 'gpt-5-mini',
   },
 });
 ```
@@ -128,11 +128,22 @@ export default defineConfig({
 | ---------- | -------- | ---------------- | --------------------------------------------------------- |
 | `provider` | `string` | `openai`         | One of `openai`, `deepl`, `anthropic`, `gemini`.          |
 | `apiKey`   | `string` | —                | API key. Falls back to the provider env var when omitted. |
-| `model`    | `string` | provider default | Provider model id (e.g. `gpt-4o-mini`).                   |
+| `model`    | `string` | provider default | Provider model id (e.g. `gpt-5-mini`).                    |
+
+Each provider reads its key from a dedicated environment variable when `apiKey`
+is not set:
+
+| Provider    | Env var             | Default model            |
+| ----------- | ------------------- | ------------------------ |
+| `openai`    | `OPENAI_API_KEY`    | `gpt-5-mini`             |
+| `deepl`     | `DEEPL_API_KEY`     | n/a (DeepL has no model) |
+| `anthropic` | `ANTHROPIC_API_KEY` | `claude-haiku-4-5`       |
+| `gemini`    | `GEMINI_API_KEY`    | `gemini-3-flash`         |
 
 <Callout title="Provider availability">
-  Only `openai` is released today. `deepl`, `anthropic`, and `gemini` are gated behind
-  `LANGSYNC_AI_EXPERIMENTAL=1` until they ship.
+  Only `openai` is released today. `deepl`, `anthropic`, and `gemini` are fully implemented and
+  tested but gated behind `LANGSYNC_AI_EXPERIMENTAL=1` until each graduates to released. DeepL
+  automatically uses the free endpoint for keys ending in `:fx` and the pro endpoint otherwise.
 </Callout>
 
 ## Locale file layout
