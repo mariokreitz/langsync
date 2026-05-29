@@ -31,6 +31,13 @@ export async function resolveWatchDir(cwd: string): Promise<string> {
   if (!loaded) {
     throw new Error('No LangSync config found. Run `langsync init` first.');
   }
+  if (loaded.config.namespaces) {
+    throw new Error(
+      'Namespace support for this command is coming in a follow-up release. ' +
+        'Remove the `namespaces` block from your config to use single-file mode.',
+    );
+  }
+
   return resolve(cwd, loaded.config.input);
 }
 
@@ -48,11 +55,18 @@ export async function runWatchPass(options: RunWatchPassOptions): Promise<RunWat
   if (!loaded) {
     throw new Error('No LangSync config found. Run `langsync init` first.');
   }
+  if (loaded.config.namespaces) {
+    throw new Error(
+      'Namespace support for this command is coming in a follow-up release. ' +
+        'Remove the `namespaces` block from your config to use single-file mode.',
+    );
+  }
 
   const files = await loadLocaleFiles({
     cwd: options.cwd,
     inputDir: loaded.config.input,
     locales: loaded.config.locales,
+    namespaces: loaded.config.namespaces,
   });
 
   const issues = validateLocales(files, referenceLocale);

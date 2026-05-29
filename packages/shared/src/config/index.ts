@@ -3,6 +3,16 @@ import { TypeScriptLoader } from 'cosmiconfig-typescript-loader';
 import { z } from 'zod';
 import { type I18nFramework } from '../types/index.js';
 
+const NamespaceConfigSchema = z.object({
+  structure: z
+    .enum(['locale-dir', 'locale-prefix'])
+    .describe(
+      'Optional namespace layout. ' +
+        '`locale-dir` resolves <input>/<locale>/<namespace>.json recursively. ' +
+        '`locale-prefix` resolves <input>/<locale>.<namespace>.json.',
+    ),
+});
+
 export const LangSyncConfigSchema = z.object({
   input: z.string().describe('Path to the source i18n directory.'),
   output: z
@@ -27,6 +37,9 @@ export const LangSyncConfigSchema = z.object({
     .enum(['i18next', 'ngx-translate', 'react-intl', 'none'])
     .optional()
     .describe('i18n framework integration. Use `none` to opt out explicitly.'),
+  namespaces: NamespaceConfigSchema.optional().describe(
+    'Optional namespace settings. Omit this block to keep the default single-file layout at <input>/<locale>.json.',
+  ),
   excel: z
     .object({
       file: z.string().default('translations.xlsx'),

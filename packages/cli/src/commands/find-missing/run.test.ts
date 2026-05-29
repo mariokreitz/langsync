@@ -23,9 +23,27 @@ describe('runFindMissing', () => {
       filepath: '/p/langsync.config.ts',
     });
     mockedLoadLocaleFiles.mockResolvedValue([
-      { locale: 'en', path: '/p/i18n/en.json', translations: { a: 'A', b: 'B', c: 'C' } },
-      { locale: 'de', path: '/p/i18n/de.json', translations: { a: 'A' } },
-      { locale: 'fr', path: '/p/i18n/fr.json', translations: { a: 'A', b: 'B' } },
+      {
+        locale: 'en',
+        namespace: null,
+        path: '/p/i18n/en.json',
+        exists: true,
+        translations: { a: 'A', b: 'B', c: 'C' },
+      },
+      {
+        locale: 'de',
+        namespace: null,
+        path: '/p/i18n/de.json',
+        exists: true,
+        translations: { a: 'A' },
+      },
+      {
+        locale: 'fr',
+        namespace: null,
+        path: '/p/i18n/fr.json',
+        exists: true,
+        translations: { a: 'A', b: 'B' },
+      },
     ]);
 
     const result = await runFindMissing({ cwd: '/p' });
@@ -42,8 +60,20 @@ describe('runFindMissing', () => {
       filepath: '/p/langsync.config.ts',
     });
     mockedLoadLocaleFiles.mockResolvedValue([
-      { locale: 'en', path: '/p/i18n/en.json', translations: { a: 'A' } },
-      { locale: 'de', path: '/p/i18n/de.json', translations: { a: 'A' } },
+      {
+        locale: 'en',
+        namespace: null,
+        path: '/p/i18n/en.json',
+        exists: true,
+        translations: { a: 'A' },
+      },
+      {
+        locale: 'de',
+        namespace: null,
+        path: '/p/i18n/de.json',
+        exists: true,
+        translations: { a: 'A' },
+      },
     ]);
 
     const result = await runFindMissing({ cwd: '/p' });

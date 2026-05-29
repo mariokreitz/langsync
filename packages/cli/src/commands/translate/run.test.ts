@@ -48,11 +48,32 @@ describe('runTranslate', () => {
     await expect(runTranslate({ cwd: '/p' })).rejects.toThrow(/No LangSync config/);
   });
 
+  it('throws and loads no files when namespaces are configured', async () => {
+    mockedLoadConfig.mockResolvedValue({
+      ...baseConfig,
+      config: { ...baseConfig.config, namespaces: { structure: 'locale-dir' } },
+    });
+    await expect(runTranslate({ cwd: '/p' })).rejects.toThrow(/follow-up release/i);
+    expect(mockedLoadLocaleFiles).not.toHaveBeenCalled();
+  });
+
   it('fills empty target values and writes them', async () => {
     mockedLoadConfig.mockResolvedValue(baseConfig);
     mockedLoadLocaleFiles.mockResolvedValue([
-      { locale: 'en', path: '/p/i18n/en.json', translations: { a: 'A', b: 'B' } },
-      { locale: 'de', path: '/p/i18n/de.json', translations: { a: 'AA', b: '' } },
+      {
+        locale: 'en',
+        namespace: null,
+        path: '/p/i18n/en.json',
+        exists: true,
+        translations: { a: 'A', b: 'B' },
+      },
+      {
+        locale: 'de',
+        namespace: null,
+        path: '/p/i18n/de.json',
+        exists: true,
+        translations: { a: 'AA', b: '' },
+      },
     ]);
 
     const result = await runTranslate({ cwd: '/p' });
@@ -67,8 +88,20 @@ describe('runTranslate', () => {
   it('honors dryRun and does not write', async () => {
     mockedLoadConfig.mockResolvedValue(baseConfig);
     mockedLoadLocaleFiles.mockResolvedValue([
-      { locale: 'en', path: '/p/i18n/en.json', translations: { a: 'A' } },
-      { locale: 'de', path: '/p/i18n/de.json', translations: { a: '' } },
+      {
+        locale: 'en',
+        namespace: null,
+        path: '/p/i18n/en.json',
+        exists: true,
+        translations: { a: 'A' },
+      },
+      {
+        locale: 'de',
+        namespace: null,
+        path: '/p/i18n/de.json',
+        exists: true,
+        translations: { a: '' },
+      },
     ]);
 
     const result = await runTranslate({ cwd: '/p', dryRun: true });
@@ -81,8 +114,20 @@ describe('runTranslate', () => {
   it('passes the provider override to the adapter factory', async () => {
     mockedLoadConfig.mockResolvedValue(baseConfig);
     mockedLoadLocaleFiles.mockResolvedValue([
-      { locale: 'en', path: '/p/i18n/en.json', translations: { a: 'A' } },
-      { locale: 'de', path: '/p/i18n/de.json', translations: { a: 'AA' } },
+      {
+        locale: 'en',
+        namespace: null,
+        path: '/p/i18n/en.json',
+        exists: true,
+        translations: { a: 'A' },
+      },
+      {
+        locale: 'de',
+        namespace: null,
+        path: '/p/i18n/de.json',
+        exists: true,
+        translations: { a: 'AA' },
+      },
     ]);
 
     await runTranslate({ cwd: '/p', provider: 'openai' });
@@ -103,8 +148,20 @@ describe('runTranslate', () => {
       filepath: '/p/langsync.config.ts',
     });
     mockedLoadLocaleFiles.mockResolvedValue([
-      { locale: 'en', path: '/p/i18n/en.json', translations: { a: 'A' } },
-      { locale: 'de', path: '/p/i18n/de.json', translations: { a: 'AA' } },
+      {
+        locale: 'en',
+        namespace: null,
+        path: '/p/i18n/en.json',
+        exists: true,
+        translations: { a: 'A' },
+      },
+      {
+        locale: 'de',
+        namespace: null,
+        path: '/p/i18n/de.json',
+        exists: true,
+        translations: { a: 'AA' },
+      },
     ]);
 
     await runTranslate({ cwd: '/p', model: 'flag-model' });
@@ -125,8 +182,20 @@ describe('runTranslate', () => {
       filepath: '/p/langsync.config.ts',
     });
     mockedLoadLocaleFiles.mockResolvedValue([
-      { locale: 'en', path: '/p/i18n/en.json', translations: { a: 'A' } },
-      { locale: 'de', path: '/p/i18n/de.json', translations: { a: 'AA' } },
+      {
+        locale: 'en',
+        namespace: null,
+        path: '/p/i18n/en.json',
+        exists: true,
+        translations: { a: 'A' },
+      },
+      {
+        locale: 'de',
+        namespace: null,
+        path: '/p/i18n/de.json',
+        exists: true,
+        translations: { a: 'AA' },
+      },
     ]);
 
     const result = await runTranslate({ cwd: '/p' });
@@ -139,7 +208,7 @@ describe('runTranslate', () => {
   it('throws when the reference locale file is missing', async () => {
     mockedLoadConfig.mockResolvedValue(baseConfig);
     mockedLoadLocaleFiles.mockResolvedValue([
-      { locale: 'de', path: '/p/i18n/de.json', translations: {} },
+      { locale: 'de', namespace: null, path: '/p/i18n/de.json', exists: true, translations: {} },
     ]);
 
     await expect(runTranslate({ cwd: '/p' })).rejects.toThrow(/reference locale/i);
@@ -158,11 +227,25 @@ describe('runTranslate', () => {
     mockedLoadLocaleFiles.mockResolvedValue([
       {
         locale: 'en',
+        namespace: null,
         path: '/p/i18n/en.json',
+        exists: true,
         translations: { a: 'A', b: 'B', c: 'C' },
       },
-      { locale: 'de', path: '/p/i18n/de.json', translations: { a: '', b: '', c: '' } },
-      { locale: 'fr', path: '/p/i18n/fr.json', translations: { a: '', b: '', c: '' } },
+      {
+        locale: 'de',
+        namespace: null,
+        path: '/p/i18n/de.json',
+        exists: true,
+        translations: { a: '', b: '', c: '' },
+      },
+      {
+        locale: 'fr',
+        namespace: null,
+        path: '/p/i18n/fr.json',
+        exists: true,
+        translations: { a: '', b: '', c: '' },
+      },
     ]);
 
     const result = await runTranslate({ cwd: '/p', maxKeys: 4 });
@@ -178,8 +261,20 @@ describe('runTranslate', () => {
   it('reports totalTranslatableKeys correctly when all targets are filled', async () => {
     mockedLoadConfig.mockResolvedValue(baseConfig);
     mockedLoadLocaleFiles.mockResolvedValue([
-      { locale: 'en', path: '/p/i18n/en.json', translations: { a: 'A' } },
-      { locale: 'de', path: '/p/i18n/de.json', translations: { a: 'AA' } },
+      {
+        locale: 'en',
+        namespace: null,
+        path: '/p/i18n/en.json',
+        exists: true,
+        translations: { a: 'A' },
+      },
+      {
+        locale: 'de',
+        namespace: null,
+        path: '/p/i18n/de.json',
+        exists: true,
+        translations: { a: 'AA' },
+      },
     ]);
 
     const result = await runTranslate({ cwd: '/p' });
