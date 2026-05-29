@@ -10,7 +10,7 @@ translations are never overwritten — the target always wins.
 ## Usage
 
 ```bash
-langsync translate [--provider <provider>] [--dry-run]
+langsync translate [--provider <provider>] [--model <model>] [--dry-run]
 ```
 
 ## Flags
@@ -18,18 +18,20 @@ langsync translate [--provider <provider>] [--dry-run]
 | Flag                | Default           | Description                                 |
 | ------------------- | ----------------- | ------------------------------------------- |
 | `--provider <name>` | config / `openai` | Override the configured AI provider.        |
+| `--model <model>`   | config / default  | Override the configured provider model.     |
 | `--dry-run`         | `false`           | Report what would be translated, no writes. |
 
 ## Providers
 
-| Provider    | Status         | API key env var     |
-| ----------- | -------------- | ------------------- |
-| `openai`    | Released       | `OPENAI_API_KEY`    |
-| `deepl`     | Planned (flag) | `DEEPL_API_KEY`     |
-| `anthropic` | Planned (flag) | `ANTHROPIC_API_KEY` |
-| `gemini`    | Planned (flag) | `GEMINI_API_KEY`    |
+| Provider    | Status              | API key env var     |
+| ----------- | ------------------- | ------------------- |
+| `openai`    | Released            | `OPENAI_API_KEY`    |
+| `deepl`     | Experimental (flag) | `DEEPL_API_KEY`     |
+| `anthropic` | Experimental (flag) | `ANTHROPIC_API_KEY` |
+| `gemini`    | Experimental (flag) | `GEMINI_API_KEY`    |
 
-Unreleased providers are gated behind `LANGSYNC_AI_EXPERIMENTAL=1`.
+Experimental providers are implemented and tested but gated behind
+`LANGSYNC_AI_EXPERIMENTAL=1` until each graduates to released.
 
 ## Configuration
 

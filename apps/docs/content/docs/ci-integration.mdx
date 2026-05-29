@@ -3,7 +3,6 @@ title: CI Integration
 description: Fail pull requests when locales drift. Recipes for GitHub Actions, GitLab CI, and CircleCI.
 ---
 
-import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
 import { Callout } from 'fumadocs-ui/components/callout';
 
 `langsync validate` (and `find-missing`) exit with code `1` when a locale
@@ -46,8 +45,61 @@ jobs:
 ```
 
 <Callout title="AI translate in CI">
-  The action ships `validate` only. Running `langsync translate` in CI is deferred to a later
-  release while API-key secret handling is finalized.
+  The action can optionally run `langsync translate` before validating, to fill empty values with an
+  AI provider. It is **off by default**. Enable it with `translate: true` and pass the API key from
+  a secret (never hard-code it). See [AI translate in CI](#ai-translate-in-ci) below.
+</Callout>
+
+### AI translate in CI
+
+Set `translate: true` and provide the provider, the API key (from a repository
+secret), and optionally a model. While DeepL, Anthropic, and Gemini are
+experimental, the action sets `LANGSYNC_AI_EXPERIMENTAL=1` for the translate step
+automatically.
+
+```yaml title=".github/workflows/i18n.yml"
+name: i18n
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  translate-and-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+      - uses: mariokreitz/langsync/packages/github-action@v2
+        with:
+          translate: true
+          ai-provider: openai
+          ai-api-key: ${{ secrets.OPENAI_API_KEY }}
+          ai-model: gpt-5-mini
+          # Recommended on PRs: report only, do not write files or incur a full bill.
+          ai-dry-run: true
+          fail-on-issues: true
+          comment: true
+```
+
+| Input         | Default  | Description                                                           |
+| ------------- | -------- | --------------------------------------------------------------------- |
+| `translate`   | `false`  | Run `langsync translate` before validating.                           |
+| `ai-provider` | `openai` | `openai`, `deepl`, `anthropic`, or `gemini`.                          |
+| `ai-api-key`  | —        | Provider API key. Pass via a secret. Required when `translate: true`. |
+| `ai-model`    | —        | Provider model id. Uses the provider default when empty.              |
+| `ai-dry-run`  | `false`  | Report planned translations without writing files.                    |
+
+<Callout type="warn" title="Translate incurs real API costs">
+  `langsync translate` calls a paid AI API for every empty key on every run. Use `ai-dry-run: true`
+  on pull-request checks and reserve a full translate for post-merge or scheduled jobs. A
+  `--max-keys` cap to bound spend is planned for a future release.
 </Callout>
 
 ## GitHub Actions

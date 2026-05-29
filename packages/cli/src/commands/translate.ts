@@ -8,6 +8,7 @@ import { runTranslate } from './translate/run.js';
 interface TranslateFlags {
   dryRun: boolean;
   provider?: AIProvider;
+  model?: string;
 }
 
 export function registerTranslateCommand(program: Command): void {
@@ -15,6 +16,7 @@ export function registerTranslateCommand(program: Command): void {
     .command('translate')
     .description('Fill empty values in non-reference locales using an AI provider.')
     .option('--provider <provider>', 'Override the configured AI provider.')
+    .option('--model <model>', 'Override the configured provider model.')
     .option('--dry-run', 'Report what would be translated without writing files.', false)
     .action(async (flags: TranslateFlags) => {
       try {
@@ -23,6 +25,7 @@ export function registerTranslateCommand(program: Command): void {
           cwd,
           dryRun: flags.dryRun,
           provider: flags.provider,
+          model: flags.model,
         });
 
         const totals = Object.values(result.translatedByLocale).reduce(

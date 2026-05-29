@@ -7,6 +7,8 @@ export interface RunTranslateOptions {
   dryRun?: boolean;
   /** Override the provider configured in `langsync.config.ts`. */
   provider?: AIProvider;
+  /** Override the model configured in `langsync.config.ts`. */
+  model?: string;
 }
 
 export interface RunTranslateResult {
@@ -36,7 +38,7 @@ export async function runTranslate(options: RunTranslateOptions): Promise<RunTra
   const adapter = createAdapter({
     provider,
     apiKey: config.ai?.apiKey,
-    model: config.ai?.model,
+    model: options.model ?? config.ai?.model,
   });
 
   const files = await loadLocaleFiles({
