@@ -1,8 +1,6 @@
 name: CI
 
 on:
-  push:
-    branches: [main, 'changeset-release/**']
   pull_request:
     branches: [main]
 
@@ -122,3 +120,17 @@ jobs:
             ./packages/cli/coverage/lcov.info
           flags: unittests
           fail_ci_if_error: true
+
+  ci-passed:
+    name: CI passed
+    runs-on: ubuntu-latest
+    needs: [format-check, build, typecheck, lint, test]
+    if: always()
+    steps:
+      - name: Check all jobs passed
+        run: |
+          if [[ "${{ contains(needs.*.result, 'failure') }}" == "true" || "${{ contains(needs.*.result, 'cancelled') }}" == "true" ]]; then
+            echo "One or more CI jobs failed or were cancelled"
+            exit 1
+          fi
+          echo "All CI jobs passed"

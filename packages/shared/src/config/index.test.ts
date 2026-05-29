@@ -1,5 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
-import { LangSyncConfigSchema, defineConfig, loadConfig, type LangSyncConfigInput } from './index.js';
+import {
+  LangSyncConfigSchema,
+  defineConfig,
+  loadConfig,
+  type LangSyncConfigInput,
+} from './index.js';
 
 vi.mock('cosmiconfig', () => ({
   cosmiconfig: vi.fn(() => ({
