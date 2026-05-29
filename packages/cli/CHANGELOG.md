@@ -1,5 +1,22 @@
 # @mariokreitz/langsync
 
+## 0.4.0
+
+### Minor Changes
+
+- 3223fe8: Add AI translate support to the GitHub Action and a `--model` flag to
+  `langsync translate`. The composite action gains `translate`, `ai-provider`,
+  `ai-api-key`, `ai-model`, and `ai-dry-run` inputs; the translate step maps the
+  key to the provider-specific env var and sets `LANGSYNC_AI_EXPERIMENTAL=1` so
+  experimental providers work in CI. Translate is off by default; prefer
+  `ai-dry-run: true` on pull-request checks to avoid unnecessary API costs.
+- a7e3b13: Add DeepL, Anthropic, and Gemini AI translation adapters. All three implement
+  the same `TranslationAdapter` interface and are fully tested, but remain gated
+  behind `LANGSYNC_AI_EXPERIMENTAL=1` until each graduates to released after
+  smoke-testing. DeepL auto-detects the free (`api-free.deepl.com`) vs. pro
+  (`api.deepl.com`) endpoint from the `:fx` key suffix, with a `useFreeTier`
+  override.
+
 ## 0.3.0
 
 ### Minor Changes
