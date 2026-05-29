@@ -1,0 +1,119 @@
+name: Bug report
+description: Report a reproducible problem in LangSync.
+title: 'bug: '
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug. Please do not report security vulnerabilities here. Use the private process in SECURITY.md instead.
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Preflight checklist
+      options:
+        - label: I have searched existing issues and pull requests.
+          required: true
+        - label: I have read the documentation relevant to this feature or command.
+          required: true
+        - label: This is not a security vulnerability.
+          required: true
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: Describe the problem in a few sentences.
+      placeholder: What happened, and what did you expect to happen?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Affected area
+      options:
+        - CLI
+        - Core sync engine
+        - Excel import/export
+        - Shared config or filesystem helpers
+        - Documentation site
+        - CI or release workflow
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: LangSync version
+      description: Run `langsync --version` if the CLI is installed.
+      placeholder: '0.1.1'
+    validations:
+      required: false
+
+  - type: input
+    id: node-version
+    attributes:
+      label: Node.js version
+      description: Run `node --version`.
+      placeholder: 'v22.12.0'
+    validations:
+      required: false
+
+  - type: input
+    id: package-manager
+    attributes:
+      label: Package manager
+      description: Include the package manager and version if relevant.
+      placeholder: 'pnpm 11.4.0, npm 10.x, yarn 4.x'
+    validations:
+      required: false
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction steps
+      description: Provide the smallest set of steps needed to reproduce the issue.
+      placeholder: |
+        1. Create this locale file...
+        2. Run this command...
+        3. Observe this output...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What should have happened?
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: What happened instead? Include logs or command output when useful.
+      render: shell
+    validations:
+      required: true
+
+  - type: textarea
+    id: config
+    attributes:
+      label: Relevant configuration or locale sample
+      description: Paste the smallest relevant config or locale JSON. Remove secrets and private data.
+      render: json
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional context
+      description: Add any other context, links, screenshots, or related issues.
+    validations:
+      required: false

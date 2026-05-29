@@ -1,0 +1,69 @@
+name: Documentation improvement
+description: Report missing, confusing, or outdated documentation.
+title: 'docs: '
+labels:
+  - documentation
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template for README, package documentation, and docs site improvements.
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Preflight checklist
+      options:
+        - label: I have searched existing issues and pull requests.
+          required: true
+        - label: I have checked the current documentation site and README files.
+          required: true
+
+  - type: dropdown
+    id: docs-area
+    attributes:
+      label: Documentation area
+      options:
+        - Root README
+        - CLI README
+        - Package README
+        - Documentation site
+        - Command reference
+        - Configuration reference
+        - Integration guide
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: page-url
+    attributes:
+      label: Page or file
+      description: Link to the page or name the file that should change.
+      placeholder: 'apps/docs/content/docs/configuration.mdx'
+    validations:
+      required: false
+
+  - type: textarea
+    id: issue
+    attributes:
+      label: What should be improved?
+      description: Explain what is missing, unclear, outdated, or incorrect.
+    validations:
+      required: true
+
+  - type: textarea
+    id: suggested-change
+    attributes:
+      label: Suggested change
+      description: If you already know the wording or structure you want, describe it here.
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional context
+      description: Add examples, related issues, screenshots, or links.
+    validations:
+      required: false

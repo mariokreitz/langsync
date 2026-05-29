@@ -1,0 +1,89 @@
+name: Feature request
+description: Propose a new capability or improvement for LangSync.
+title: 'feat: '
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for proposing an improvement. Please describe the user problem first so the solution can be evaluated clearly.
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Preflight checklist
+      options:
+        - label: I have searched existing issues and pull requests.
+          required: true
+        - label: I have checked whether this already exists in the documentation.
+          required: true
+        - label: This request is in scope for localization workflow tooling.
+          required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem statement
+      description: What workflow problem does this solve?
+      placeholder: As a localization maintainer, I want to...
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: Describe the behavior, command, API, or documentation change you would like.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Affected area
+      options:
+        - CLI
+        - Core sync engine
+        - Excel import/export
+        - Shared config or filesystem helpers
+        - Documentation site
+        - CI or release workflow
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Describe workarounds or alternative designs you considered.
+    validations:
+      required: false
+
+  - type: textarea
+    id: examples
+    attributes:
+      label: Example usage
+      description: If relevant, show what the command, config, API, or output could look like.
+      render: shell
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: Contribution
+      options:
+        - label: I would be willing to open a pull request for this feature.
+          required: false
+        - label: I would be willing to help test this feature.
+          required: false
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional context
+      description: Add links, screenshots, related tools, or additional use cases.
+    validations:
+      required: false

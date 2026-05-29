@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/mariokreitz/langsync/security/advisories/new
+    about: Report suspected vulnerabilities privately. Do not open a public issue for security reports.
+  - name: Documentation
+    url: https://docs.langsync.kreitz-webdev.de
+    about: Read the LangSync documentation before opening a support or documentation issue.
+  - name: npm package
+    url: https://www.npmjs.com/package/@mariokreitz/langsync
+    about: View the published CLI package and installation metadata.
