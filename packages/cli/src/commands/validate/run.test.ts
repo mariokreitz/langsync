@@ -21,14 +21,41 @@ describe('runValidate', () => {
   });
   afterEach(() => vi.clearAllMocks());
 
+  it('throws and loads no files when namespaces are configured', async () => {
+    mockedLoadConfig.mockResolvedValue({
+      config: {
+        input: './i18n',
+        output: './out',
+        locales: ['en', 'de'],
+        defaultLocale: 'en',
+        namespaces: { structure: 'locale-dir' },
+      },
+      filepath: '/p/langsync.config.ts',
+    });
+    await expect(runValidate({ cwd: '/p' })).rejects.toThrow(/follow-up release/i);
+    expect(mockedLoadLocaleFiles).not.toHaveBeenCalled();
+  });
+
   it('returns exitCode 0 and no issues when locales are in sync', async () => {
     mockedLoadConfig.mockResolvedValue({
       config: { input: './i18n', output: './out', locales: ['en', 'de'], defaultLocale: 'en' },
       filepath: '/p/langsync.config.ts',
     });
     mockedLoadLocaleFiles.mockResolvedValue([
-      { locale: 'en', path: '/p/i18n/en.json', translations: { hi: 'Hi' } },
-      { locale: 'de', path: '/p/i18n/de.json', translations: { hi: 'Hallo' } },
+      {
+        locale: 'en',
+        namespace: null,
+        path: '/p/i18n/en.json',
+        exists: true,
+        translations: { hi: 'Hi' },
+      },
+      {
+        locale: 'de',
+        namespace: null,
+        path: '/p/i18n/de.json',
+        exists: true,
+        translations: { hi: 'Hallo' },
+      },
     ]);
 
     const result = await runValidate({ cwd: '/p' });
@@ -42,8 +69,20 @@ describe('runValidate', () => {
       filepath: '/p/langsync.config.ts',
     });
     mockedLoadLocaleFiles.mockResolvedValue([
-      { locale: 'en', path: '/p/i18n/en.json', translations: { hi: 'Hi', bye: 'Bye' } },
-      { locale: 'de', path: '/p/i18n/de.json', translations: { hi: 'Hallo' } },
+      {
+        locale: 'en',
+        namespace: null,
+        path: '/p/i18n/en.json',
+        exists: true,
+        translations: { hi: 'Hi', bye: 'Bye' },
+      },
+      {
+        locale: 'de',
+        namespace: null,
+        path: '/p/i18n/de.json',
+        exists: true,
+        translations: { hi: 'Hallo' },
+      },
     ]);
 
     const result = await runValidate({ cwd: '/p' });
@@ -57,7 +96,13 @@ describe('runValidate', () => {
       filepath: '/p/langsync.config.ts',
     });
     mockedLoadLocaleFiles.mockResolvedValue([
-      { locale: 'en', path: '/p/i18n/en.json', translations: { hi: '' } },
+      {
+        locale: 'en',
+        namespace: null,
+        path: '/p/i18n/en.json',
+        exists: true,
+        translations: { hi: '' },
+      },
     ]);
 
     const result = await runValidate({ cwd: '/p' });
@@ -76,8 +121,14 @@ describe('runValidate', () => {
       filepath: '/p/langsync.config.ts',
     });
     mockedLoadLocaleFiles.mockResolvedValue([
-      { locale: 'de', path: '/p/i18n/de.json', translations: { hi: 'Hallo' } },
-      { locale: 'en', path: '/p/i18n/en.json', translations: {} },
+      {
+        locale: 'de',
+        namespace: null,
+        path: '/p/i18n/de.json',
+        exists: true,
+        translations: { hi: 'Hallo' },
+      },
+      { locale: 'en', namespace: null, path: '/p/i18n/en.json', exists: true, translations: {} },
     ]);
 
     const result = await runValidate({ cwd: '/p' });

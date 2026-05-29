@@ -33,6 +33,12 @@ export async function runImportExcel(
     throw new Error('No LangSync config found. Run `langsync init` first.');
   }
   const { config } = loaded;
+  if (config.namespaces) {
+    throw new Error(
+      'Namespace support for this command is coming in a follow-up release. ' +
+        'Remove the `namespaces` block from your config to use single-file mode.',
+    );
+  }
 
   const file = resolve(options.cwd, options.file ?? config.excel?.file ?? DEFAULT_FILE);
   const sheetName = options.sheetName ?? config.excel?.sheetName ?? DEFAULT_SHEET;

@@ -21,6 +21,22 @@ describe('runImportExcel', () => {
   });
   afterEach(() => vi.clearAllMocks());
 
+  it('throws and imports nothing when namespaces are configured', async () => {
+    mockedLoadConfig.mockResolvedValue({
+      config: {
+        input: './i18n',
+        output: './o',
+        locales: ['en', 'de'],
+        excel: { file: 'translations.xlsx', sheetName: 'Translations' },
+        namespaces: { structure: 'locale-dir' },
+      },
+      filepath: '/p/langsync.config.ts',
+    });
+    await expect(runImportExcel({ cwd: '/p' })).rejects.toThrow(/follow-up release/i);
+    expect(mockedImportFromExcel).not.toHaveBeenCalled();
+    expect(mockedWriteJson).not.toHaveBeenCalled();
+  });
+
   it('writes each imported locale into `<input>/<locale>.json`', async () => {
     mockedLoadConfig.mockResolvedValue({
       config: {

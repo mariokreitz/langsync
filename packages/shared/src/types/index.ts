@@ -4,8 +4,11 @@ export interface TranslationTree {
   [key: string]: string | TranslationTree;
 }
 
+export type NamespaceName = string | null;
+
 export interface LocaleFile {
   locale: Locale;
+  namespace: NamespaceName;
   path: string;
   translations: TranslationTree;
 }

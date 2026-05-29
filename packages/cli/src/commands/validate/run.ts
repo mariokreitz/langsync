@@ -25,12 +25,20 @@ export async function runValidate(options: RunValidateOptions): Promise<RunValid
   }
 
   const { config } = loaded;
+  if (config.namespaces) {
+    throw new Error(
+      'Namespace support for this command is coming in a follow-up release. ' +
+        'Remove the `namespaces` block from your config to use single-file mode.',
+    );
+  }
+
   const referenceLocale = config.defaultLocale ?? config.locales[0]!;
 
   const files = await loadLocaleFiles({
     cwd: options.cwd,
     inputDir: config.input,
     locales: config.locales,
+    namespaces: config.namespaces,
   });
 
   const issues = validateLocales(files, referenceLocale);

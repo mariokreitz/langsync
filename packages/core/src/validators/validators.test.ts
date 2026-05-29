@@ -4,6 +4,7 @@ import { type LocaleFile } from '@langsync/shared/types';
 
 const en: LocaleFile = {
   locale: 'en',
+  namespace: null,
   path: '/i18n/en.json',
   translations: { greeting: { hello: 'Hello', bye: 'Bye' }, app: { name: 'LangSync' } },
 };
@@ -12,6 +13,7 @@ describe('validateLocales', () => {
   it('reports missing keys in non-reference locales', () => {
     const de: LocaleFile = {
       locale: 'de',
+      namespace: null,
       path: '/i18n/de.json',
       translations: { greeting: { hello: 'Hallo' }, app: { name: 'LangSync' } },
     };
@@ -22,6 +24,7 @@ describe('validateLocales', () => {
   it('reports extra keys in non-reference locales', () => {
     const de: LocaleFile = {
       locale: 'de',
+      namespace: null,
       path: '/i18n/de.json',
       translations: {
         greeting: { hello: 'Hallo', bye: 'Tschuess', extra: 'X' },
@@ -35,6 +38,7 @@ describe('validateLocales', () => {
   it('reports empty values in any locale', () => {
     const de: LocaleFile = {
       locale: 'de',
+      namespace: null,
       path: '/i18n/de.json',
       translations: { greeting: { hello: '', bye: 'Tschuess' }, app: { name: 'LangSync' } },
     };
@@ -50,6 +54,7 @@ describe('validateLocales', () => {
   it('returns [] when reference locale is not present', () => {
     const de: LocaleFile = {
       locale: 'de',
+      namespace: null,
       path: '/i18n/de.json',
       translations: { greeting: { hello: 'Hallo' } },
     };

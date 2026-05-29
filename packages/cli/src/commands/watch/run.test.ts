@@ -34,6 +34,14 @@ describe('resolveWatchDir', () => {
     mockedLoadConfig.mockResolvedValue(null);
     await expect(resolveWatchDir('/p')).rejects.toThrow(/No LangSync config/);
   });
+
+  it('throws when namespaces are configured', async () => {
+    mockedLoadConfig.mockResolvedValue({
+      ...config,
+      config: { ...config.config, namespaces: { structure: 'locale-dir' } },
+    });
+    await expect(resolveWatchDir('/p')).rejects.toThrow(/follow-up release/i);
+  });
 });
 
 describe('runWatchPass', () => {
@@ -52,8 +60,20 @@ describe('runWatchPass', () => {
     });
     mockedLoadConfig.mockResolvedValue(config);
     mockedLoadLocaleFiles.mockResolvedValue([
-      { locale: 'en', path: '/p/i18n/en.json', translations: { a: 'A' } },
-      { locale: 'de', path: '/p/i18n/de.json', translations: { a: '' } },
+      {
+        locale: 'en',
+        namespace: null,
+        path: '/p/i18n/en.json',
+        exists: true,
+        translations: { a: 'A' },
+      },
+      {
+        locale: 'de',
+        namespace: null,
+        path: '/p/i18n/de.json',
+        exists: true,
+        translations: { a: '' },
+      },
     ]);
 
     const result = await runWatchPass({ cwd: '/p' });

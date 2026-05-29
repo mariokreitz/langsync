@@ -21,6 +21,22 @@ describe('runExportExcel', () => {
   });
   afterEach(() => vi.clearAllMocks());
 
+  it('throws and loads no files when namespaces are configured', async () => {
+    mockedLoadConfig.mockResolvedValue({
+      config: {
+        input: './i18n',
+        output: './o',
+        locales: ['en', 'de'],
+        excel: { file: 'i18n.xlsx', sheetName: 'Sheet' },
+        namespaces: { structure: 'locale-prefix' },
+      },
+      filepath: '/p/langsync.config.ts',
+    });
+    await expect(runExportExcel({ cwd: '/p' })).rejects.toThrow(/follow-up release/i);
+    expect(mockedLoadLocaleFiles).not.toHaveBeenCalled();
+    expect(mockedExportToExcel).not.toHaveBeenCalled();
+  });
+
   it('exports to the configured excel.file path', async () => {
     mockedLoadConfig.mockResolvedValue({
       config: {
@@ -32,8 +48,20 @@ describe('runExportExcel', () => {
       filepath: '/p/langsync.config.ts',
     });
     mockedLoadLocaleFiles.mockResolvedValue([
-      { locale: 'en', path: '/p/i18n/en.json', translations: { a: 'A' } },
-      { locale: 'de', path: '/p/i18n/de.json', translations: { a: 'A' } },
+      {
+        locale: 'en',
+        namespace: null,
+        path: '/p/i18n/en.json',
+        exists: true,
+        translations: { a: 'A' },
+      },
+      {
+        locale: 'de',
+        namespace: null,
+        path: '/p/i18n/de.json',
+        exists: true,
+        translations: { a: 'A' },
+      },
     ]);
     mockedExportToExcel.mockResolvedValue();
 
@@ -56,7 +84,7 @@ describe('runExportExcel', () => {
       filepath: '/p/langsync.config.ts',
     });
     mockedLoadLocaleFiles.mockResolvedValue([
-      { locale: 'en', path: '/p/i18n/en.json', translations: {} },
+      { locale: 'en', namespace: null, path: '/p/i18n/en.json', exists: true, translations: {} },
     ]);
     mockedExportToExcel.mockResolvedValue();
 
@@ -74,7 +102,7 @@ describe('runExportExcel', () => {
       filepath: '/p/langsync.config.ts',
     });
     mockedLoadLocaleFiles.mockResolvedValue([
-      { locale: 'en', path: '/p/i18n/en.json', translations: {} },
+      { locale: 'en', namespace: null, path: '/p/i18n/en.json', exists: true, translations: {} },
     ]);
     mockedExportToExcel.mockResolvedValue();
 

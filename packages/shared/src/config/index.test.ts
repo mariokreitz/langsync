@@ -65,6 +65,45 @@ describe('LangSyncConfigSchema', () => {
     expect(parsed.framework).toBeUndefined();
   });
 
+  it('accepts config with no namespaces block', () => {
+    const parsed = LangSyncConfigSchema.parse({
+      input: './src/i18n',
+      locales: ['en'],
+    });
+
+    expect(parsed.namespaces).toBeUndefined();
+  });
+
+  it('accepts locale-dir namespace structure', () => {
+    const parsed = LangSyncConfigSchema.parse({
+      input: './src/i18n',
+      locales: ['en'],
+      namespaces: { structure: 'locale-dir' },
+    });
+
+    expect(parsed.namespaces).toEqual({ structure: 'locale-dir' });
+  });
+
+  it('accepts locale-prefix namespace structure', () => {
+    const parsed = LangSyncConfigSchema.parse({
+      input: './src/i18n',
+      locales: ['en'],
+      namespaces: { structure: 'locale-prefix' },
+    });
+
+    expect(parsed.namespaces).toEqual({ structure: 'locale-prefix' });
+  });
+
+  it('rejects unknown namespace structure', () => {
+    expect(() =>
+      LangSyncConfigSchema.parse({
+        input: './src/i18n',
+        locales: ['en'],
+        namespaces: { structure: 'flat' },
+      }),
+    ).toThrow();
+  });
+
   it('rejects an empty locales array', () => {
     expect(() => LangSyncConfigSchema.parse({ input: './src/i18n', locales: [] })).toThrow();
   });
