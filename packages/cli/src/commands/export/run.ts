@@ -51,7 +51,11 @@ export async function runExportExcel(
   await exportToExcel({
     file,
     sheetName,
-    locales: files.map((f) => ({ locale: f.locale, translations: f.translations })),
+    files: files.map((f) => ({
+      locale: f.locale,
+      namespace: f.namespace,
+      translations: f.translations,
+    })),
   });
 
   return { file, sheetName, locales: files.map((f) => f.locale) };
