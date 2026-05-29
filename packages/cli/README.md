@@ -67,8 +67,8 @@ npx langsync import excel
 | `langsync export excel` | Export locales/namespaces into a single `.xlsx` workbook.           |
 | `langsync import excel` | Import workbook translations back into configured JSON files.       |
 
-All read commands support `--reporter json`. All write commands support
-`--dry-run`.
+The `validate` and `find-missing` commands support `--reporter json`. The
+`sync`, `translate`, and `import excel` commands support `--dry-run`.
 
 ## Configuration
 
