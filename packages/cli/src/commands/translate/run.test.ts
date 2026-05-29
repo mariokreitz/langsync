@@ -93,6 +93,28 @@ describe('runTranslate', () => {
     );
   });
 
+  it('passes the model override to the adapter factory', async () => {
+    mockedLoadConfig.mockResolvedValue({
+      config: {
+        input: './i18n',
+        output: './o',
+        locales: ['en', 'de'],
+        defaultLocale: 'en',
+        ai: { provider: 'openai', model: 'config-model' },
+      },
+      filepath: '/p/langsync.config.ts',
+    });
+    mockedLoadLocaleFiles.mockResolvedValue([
+      { locale: 'en', path: '/p/i18n/en.json', translations: { a: 'A' } },
+      { locale: 'de', path: '/p/i18n/de.json', translations: { a: 'AA' } },
+    ]);
+
+    await runTranslate({ cwd: '/p', model: 'flag-model' });
+    expect(mockedCreateAdapter).toHaveBeenCalledWith(
+      expect.objectContaining({ model: 'flag-model' }),
+    );
+  });
+
   it('throws when the reference locale file is missing', async () => {
     mockedLoadConfig.mockResolvedValue({
       config: { input: './i18n', output: './o', locales: ['en', 'de'], defaultLocale: 'en' },

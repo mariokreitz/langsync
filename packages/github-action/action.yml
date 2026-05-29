@@ -26,6 +26,26 @@ inputs:
     description: 'Token used to post the PR comment.'
     required: false
     default: ${{ github.token }}
+  translate:
+    description: 'Run `langsync translate` to fill empty values using an AI provider.'
+    required: false
+    default: 'false'
+  ai-provider:
+    description: 'AI provider for translate: openai | deepl | anthropic | gemini.'
+    required: false
+    default: 'openai'
+  ai-api-key:
+    description: 'API key for the AI provider. Pass a secret; never hard-code. Required when translate is true.'
+    required: false
+    default: ''
+  ai-model:
+    description: 'Provider model id (e.g. gpt-4o-mini). Uses the provider default when empty.'
+    required: false
+    default: ''
+  ai-dry-run:
+    description: 'Run translate in dry-run mode (report only, no file writes). Recommended on PRs.'
+    required: false
+    default: 'false'
 
 outputs:
   report:
@@ -35,6 +55,33 @@ outputs:
 runs:
   using: 'composite'
   steps:
+    - name: Run langsync translate
+      if: ${{ inputs.translate == 'true' }}
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        LANGSYNC_AI_API_KEY: ${{ inputs.ai-api-key }}
+        AI_PROVIDER: ${{ inputs.ai-provider }}
+        AI_MODEL: ${{ inputs.ai-model }}
+        AI_DRY_RUN: ${{ inputs.ai-dry-run }}
+        LANGSYNC_AI_EXPERIMENTAL: '1'
+      run: |
+        if [ -z "$LANGSYNC_AI_API_KEY" ]; then
+          echo "::error::translate is enabled but no ai-api-key was provided."
+          exit 1
+        fi
+        case "$AI_PROVIDER" in
+          openai) export OPENAI_API_KEY="$LANGSYNC_AI_API_KEY" ;;
+          deepl) export DEEPL_API_KEY="$LANGSYNC_AI_API_KEY" ;;
+          anthropic) export ANTHROPIC_API_KEY="$LANGSYNC_AI_API_KEY" ;;
+          gemini) export GEMINI_API_KEY="$LANGSYNC_AI_API_KEY" ;;
+          *) echo "::error::Unknown ai-provider '$AI_PROVIDER'."; exit 1 ;;
+        esac
+        ARGS=(translate --provider "$AI_PROVIDER")
+        if [ -n "$AI_MODEL" ]; then ARGS+=(--model "$AI_MODEL"); fi
+        if [ "$AI_DRY_RUN" = "true" ]; then ARGS+=(--dry-run); fi
+        npx -y "@mariokreitz/langsync@${{ inputs.version }}" "${ARGS[@]}"
+
     - name: Run langsync validate
       id: validate
       shell: bash
