@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7
 FROM node:26-alpine AS deps
-RUN corepack enable && corepack prepare pnpm@11.4.0 --activate
+RUN npm install -g corepack && corepack enable && corepack prepare pnpm@11.4.0 --activate
 WORKDIR /repo
 
 COPY pnpm-workspace.yaml pnpm-lock.yaml package.json .npmrc ./
@@ -16,7 +16,7 @@ COPY packages/shared/package.json ./packages/shared/
 RUN pnpm install --frozen-lockfile --filter @langsync/docs... --ignore-scripts
 
 FROM node:26-alpine AS builder
-RUN corepack enable && corepack prepare pnpm@11.4.0 --activate
+RUN npm install -g corepack && corepack enable && corepack prepare pnpm@11.4.0 --activate
 WORKDIR /repo
 
 COPY --from=deps /repo/node_modules ./node_modules
