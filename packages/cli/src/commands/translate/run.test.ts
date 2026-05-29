@@ -28,6 +28,11 @@ function fakeAdapter(): TranslationAdapter {
   };
 }
 
+const baseConfig = {
+  config: { input: './i18n', output: './o', locales: ['en', 'de'], defaultLocale: 'en' },
+  filepath: '/p/langsync.config.ts',
+};
+
 describe('runTranslate', () => {
   beforeEach(() => {
     mockedLoadConfig.mockReset();
@@ -44,10 +49,7 @@ describe('runTranslate', () => {
   });
 
   it('fills empty target values and writes them', async () => {
-    mockedLoadConfig.mockResolvedValue({
-      config: { input: './i18n', output: './o', locales: ['en', 'de'], defaultLocale: 'en' },
-      filepath: '/p/langsync.config.ts',
-    });
+    mockedLoadConfig.mockResolvedValue(baseConfig);
     mockedLoadLocaleFiles.mockResolvedValue([
       { locale: 'en', path: '/p/i18n/en.json', translations: { a: 'A', b: 'B' } },
       { locale: 'de', path: '/p/i18n/de.json', translations: { a: 'AA', b: '' } },
@@ -58,13 +60,12 @@ describe('runTranslate', () => {
     expect(mockedWriteJson).toHaveBeenCalledWith('/p/i18n/de.json', { a: 'AA', b: 'tr(B)' });
     expect(result.translatedByLocale.de).toEqual(['b']);
     expect(result.written).toEqual(['/p/i18n/de.json']);
+    expect(result.skippedByLocale).toEqual({});
+    expect(result.totalTranslatableKeys).toBe(1);
   });
 
   it('honors dryRun and does not write', async () => {
-    mockedLoadConfig.mockResolvedValue({
-      config: { input: './i18n', output: './o', locales: ['en', 'de'], defaultLocale: 'en' },
-      filepath: '/p/langsync.config.ts',
-    });
+    mockedLoadConfig.mockResolvedValue(baseConfig);
     mockedLoadLocaleFiles.mockResolvedValue([
       { locale: 'en', path: '/p/i18n/en.json', translations: { a: 'A' } },
       { locale: 'de', path: '/p/i18n/de.json', translations: { a: '' } },
@@ -78,10 +79,7 @@ describe('runTranslate', () => {
   });
 
   it('passes the provider override to the adapter factory', async () => {
-    mockedLoadConfig.mockResolvedValue({
-      config: { input: './i18n', output: './o', locales: ['en', 'de'], defaultLocale: 'en' },
-      filepath: '/p/langsync.config.ts',
-    });
+    mockedLoadConfig.mockResolvedValue(baseConfig);
     mockedLoadLocaleFiles.mockResolvedValue([
       { locale: 'en', path: '/p/i18n/en.json', translations: { a: 'A' } },
       { locale: 'de', path: '/p/i18n/de.json', translations: { a: 'AA' } },
@@ -139,14 +137,53 @@ describe('runTranslate', () => {
   });
 
   it('throws when the reference locale file is missing', async () => {
-    mockedLoadConfig.mockResolvedValue({
-      config: { input: './i18n', output: './o', locales: ['en', 'de'], defaultLocale: 'en' },
-      filepath: '/p/langsync.config.ts',
-    });
+    mockedLoadConfig.mockResolvedValue(baseConfig);
     mockedLoadLocaleFiles.mockResolvedValue([
       { locale: 'de', path: '/p/i18n/de.json', translations: {} },
     ]);
 
     await expect(runTranslate({ cwd: '/p' })).rejects.toThrow(/reference locale/i);
+  });
+
+  it('honors maxKeys: limits translated keys across locales', async () => {
+    mockedLoadConfig.mockResolvedValue({
+      config: {
+        input: './i18n',
+        output: './o',
+        locales: ['en', 'de', 'fr'],
+        defaultLocale: 'en',
+      },
+      filepath: '/p/langsync.config.ts',
+    });
+    mockedLoadLocaleFiles.mockResolvedValue([
+      {
+        locale: 'en',
+        path: '/p/i18n/en.json',
+        translations: { a: 'A', b: 'B', c: 'C' },
+      },
+      { locale: 'de', path: '/p/i18n/de.json', translations: { a: '', b: '', c: '' } },
+      { locale: 'fr', path: '/p/i18n/fr.json', translations: { a: '', b: '', c: '' } },
+    ]);
+
+    const result = await runTranslate({ cwd: '/p', maxKeys: 4 });
+
+    const totalTranslated = Object.values(result.translatedByLocale).reduce(
+      (sum, keys) => sum + keys.length,
+      0,
+    );
+    expect(totalTranslated).toBe(4);
+    expect(result.totalTranslatableKeys).toBe(6); // 3 keys × 2 target locales
+  });
+
+  it('reports totalTranslatableKeys correctly when all targets are filled', async () => {
+    mockedLoadConfig.mockResolvedValue(baseConfig);
+    mockedLoadLocaleFiles.mockResolvedValue([
+      { locale: 'en', path: '/p/i18n/en.json', translations: { a: 'A' } },
+      { locale: 'de', path: '/p/i18n/de.json', translations: { a: 'AA' } },
+    ]);
+
+    const result = await runTranslate({ cwd: '/p' });
+    expect(result.totalTranslatableKeys).toBe(0);
+    expect(result.written).toEqual([]);
   });
 });
