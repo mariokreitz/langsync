@@ -61,4 +61,5 @@ export default defineConfig({
 - Extra target-only namespace files are left untouched.
 - If no namespace files are discovered while `namespaces` is configured, the
   command fails with an actionable error.
-- CLI output labels namespaced keys as `namespace:key` where needed.
+- Namespaced files are translated independently, so written output paths
+  reflect your namespace layout (for example `src/i18n/de/common.json`).

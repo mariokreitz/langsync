@@ -55,12 +55,21 @@ langsync validate --reporter json
 ```json
 {
   "referenceLocale": "en",
-  "issues": [{ "type": "missing", "locale": "de", "key": "greeting.bye" }]
+  "issues": [
+    {
+      "type": "missing",
+      "locale": "de",
+      "key": "greeting.bye",
+      "namespace": null,
+      "path": "src/i18n/de.json"
+    }
+  ]
 }
 ```
 
-In namespaced mode, issue records include namespace context so consumers can
-distinguish the same key in different files.
+Every issue record includes `namespace` and the resolved file `path`. In
+single-file mode `namespace` is `null`; in namespaced mode it holds the
+namespace name, so consumers can distinguish the same key in different files.
 
 ## Complete example
 
