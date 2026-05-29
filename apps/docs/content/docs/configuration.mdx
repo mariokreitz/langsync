@@ -108,7 +108,7 @@ export default defineConfig({
 | Option          | Type       | Required | Default                  | Description                                              |
 | --------------- | ---------- | -------- | ------------------------ | -------------------------------------------------------- |
 | `input`         | `string`   | yes      | -                        | Directory containing locale JSON files.                  |
-| `output`        | `string`   | yes      | -                        | Output directory for Excel exports and reports.          |
+| `output`        | `string`   | no       | `./translations`         | Output directory for Excel exports and reports.          |
 | `locales`       | `string[]` | yes      | -                        | List of locale codes you support.                        |
 | `defaultLocale` | `string`   | no       | First entry in `locales` | Reference locale used by `validate` and `sync`.          |
 | `framework`     | `string`   | no       | omitted                  | One of `i18next`, `ngx-translate`, `react-intl`, `none`. Omit it or set `none` to disable built-in integration. |
@@ -257,7 +257,7 @@ is not set:
 | `gemini`    | `GEMINI_API_KEY`    | `gemini-3-flash`         |
 
 <Callout title="Provider availability">
-  Only `openai` is released today. `deepl`, `anthropic`, and `gemini` are fully implemented and
+  `openai` and `deepl` are released today. `anthropic` and `gemini` are fully implemented and
   tested but gated behind `LANGSYNC_AI_EXPERIMENTAL=1` until each graduates to released. DeepL
   automatically uses the free endpoint for keys ending in `:fx` and the pro endpoint otherwise.
 </Callout>
@@ -289,12 +289,13 @@ single-file and namespaced layouts.
 When multiple config files exist, cosmiconfig's discovery order applies
 (top wins):
 
-1. `package.json#langsync`
-2. `.langsyncrc` / `.langsyncrc.json`
-3. `langsync.config.ts`
-4. `langsync.config.mjs`
-5. `langsync.config.js`
-6. `langsync.config.json`
+1. `langsync.config.ts`
+2. `langsync.config.js`
+3. `langsync.config.mjs`
+4. `langsync.config.json`
+5. `.langsyncrc`
+6. `.langsyncrc.json`
+7. `package.json#langsync`
 
 Stick to one. The first match wins; the rest are ignored.
 

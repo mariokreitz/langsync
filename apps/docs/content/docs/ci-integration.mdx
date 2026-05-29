@@ -72,8 +72,8 @@ jobs:
   translate-and-validate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 22
       - uses: mariokreitz/langsync/packages/github-action@v2
@@ -98,8 +98,8 @@ jobs:
 
 <Callout type="warn" title="Translate incurs real API costs">
   `langsync translate` calls a paid AI API for every empty key on every run. Use `ai-dry-run: true`
-  on pull-request checks and reserve a full translate for post-merge or scheduled jobs. A
-  `--max-keys` cap to bound spend is planned for a future release.
+  on pull-request checks and reserve a full translate for post-merge or scheduled jobs. Use the
+  `--max-keys` flag (CLI) to cap how many empty values a single run will translate and bound spend.
 </Callout>
 
 ## GitHub Actions

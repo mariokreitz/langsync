@@ -12,24 +12,40 @@ monorepo. Not published independently to npm; consumed by the `langsync` CLI.
 import { exportToExcel, importFromExcel } from '@langsync/excel-engine';
 ```
 
-### `exportToExcel({ file, sheetName?, locales })`
+### `exportToExcel({ file, sheetName?, files })`
 
-Write every locale into a single workbook. Layout:
+Write a set of `NamespacedFile`s (`{ locale, namespace, translations }`) into a
+single workbook. All entries must be uniformly single-file (`namespace: null`)
+or uniformly namespaced — mixing throws.
+
+Single-file layout:
 
 | key            | en    | de    |
 | -------------- | ----- | ----- |
 | greeting.hello | Hello | Hallo |
 
-- Column A holds the flattened dot-notated key.
-- Subsequent columns hold values per locale, in the order provided.
-- Keys are sorted alphabetically.
+Namespaced layout (adds a leading `namespace` column):
+
+| namespace | key   | en    | de    |
+| --------- | ----- | ----- | ----- |
+| common    | hello | Hello | Hallo |
+
+- Value columns are emitted per locale, in the order provided.
+- Keys (and `(namespace, key)` rows) are sorted alphabetically.
 
 ### `importFromExcel(file, sheetName?)`
 
 Read a workbook produced by `exportToExcel` (or any workbook with the same
-layout) and return `{ locales: [{ locale, translations }, …] }`.
+layout) and return an `ImportResult`:
 
-Throws when the named worksheet is not present.
+```ts
+{ format: 'single-file' | 'namespaced', locales: NamespacedFile[] }
+```
+
+The `format` is detected from the header row (a leading `namespace` column means
+namespaced). Throws when the named worksheet is not present, when a namespaced
+workbook has an empty `namespace` cell, or when a duplicate `(namespace, key)`
+row is found.
 
 ## Testing
 

@@ -34,9 +34,11 @@ npx langsync validate
 
 ## Locale file layout
 
-`react-intl` consumes flat message-id maps. LangSync writes nested JSON by
-default, but `react-intl` resolves dot-notated keys when you pass them via
-`<FormattedMessage id="...">`. Two strategies are common:
+`react-intl` resolves message IDs against a **flat** map handed to
+`IntlProvider`. LangSync writes nested JSON by default, so when you author
+nested files you flatten them to dot-notated IDs at load time (shown in the
+wiring example below). If you'd rather skip that step, author flat files
+instead. Two strategies are common:
 
 <Tabs items={['Nested (recommended)', 'Flat (legacy FormatJS)']}>
 <Tab value="Nested (recommended)">
@@ -98,8 +100,23 @@ import { useEffect, useState } from 'react';
 
 const SUPPORTED = ['en', 'de', 'fr'] as const;
 
+// react-intl needs a flat id -> message map, so flatten nested JSON on load.
+// Skip this step if you already author flat files.
+function flatten(obj: Record<string, unknown>, prefix = ''): Record<string, string> {
+  return Object.entries(obj).reduce<Record<string, string>>((acc, [key, value]) => {
+    const id = prefix ? `${prefix}.${key}` : key;
+    if (value && typeof value === 'object') {
+      Object.assign(acc, flatten(value as Record<string, unknown>, id));
+    } else {
+      acc[id] = String(value);
+    }
+    return acc;
+  }, {});
+}
+
 async function loadMessages(locale: string) {
-  return (await import(`./i18n/${locale}.json`)).default;
+  const nested = (await import(`./i18n/${locale}.json`)).default;
+  return flatten(nested);
 }
 
 export function AppRoot({ children }: { children: React.ReactNode }) {

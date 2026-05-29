@@ -65,12 +65,12 @@ Preview first, then write:
 
 ```bash
 $ npx langsync import excel --dry-run
-langsync ℹ Would update src/i18n/de.json (12 keys)
-langsync ℹ Would update src/i18n/fr.json (12 keys)
+langsync ℹ Would write src/i18n/de.json
+langsync ℹ Would write src/i18n/fr.json
 
 $ npx langsync import excel
-langsync ✔ Updated src/i18n/de.json
-langsync ✔ Updated src/i18n/fr.json
+langsync ✔ Wrote src/i18n/de.json
+langsync ✔ Wrote src/i18n/fr.json
 ```
 
 Follow up with `langsync validate` to confirm every locale is now consistent.

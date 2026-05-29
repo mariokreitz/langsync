@@ -7,6 +7,12 @@ description: Watch locale files and run incremental sync plus validation on chan
 incremental sync followed by validation. It prints a compact summary so you get
 instant feedback while editing translations.
 
+<Callout type="warn" title="Namespaces not yet supported">
+  `langsync watch` does not support the `namespaces` layout yet. If your config defines a
+  `namespaces` block, `watch` exits with an error. Use `sync` and `validate` directly for
+  namespaced projects until watch support lands.
+</Callout>
+
 ## Usage
 
 ```bash

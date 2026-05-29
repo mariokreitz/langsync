@@ -98,8 +98,9 @@ npx langsync sync
 | `langsync export excel` | Export locales/namespaces into a single `.xlsx` workbook.           |
 | `langsync import excel` | Import workbook translations back into configured JSON files.       |
 
-All read commands support `--reporter json` for CI integrations. All write
-commands support `--dry-run` for safe previews.
+The `validate` and `find-missing` commands support `--reporter json` for CI
+integrations. The `sync`, `translate`, and `import excel` commands support
+`--dry-run` for safe previews.
 
 ---
 
@@ -132,19 +133,19 @@ export default defineConfig({
 });
 ```
 
-| Option            | Type       | Required | Description                                      |
-| ----------------- | ---------- | -------- | ------------------------------------------------ |
-| `input`           | `string`   | yes      | Path to the source i18n directory.               |
-| `output`          | `string`   | yes      | Path to the output / translations directory.     |
-| `locales`         | `string[]` | yes      | List of supported locales.                       |
-| `defaultLocale`   | `string`   | no       | Reference locale used for validation and sync.   |
-| `framework`       | `string`   | no       | One of `i18next`, `ngx-translate`, `react-intl`. |
-| `namespaces`      | `object`   | no       | Optional `locale-dir` or `locale-prefix` layout. |
-| `excel.file`      | `string`   | no       | Excel filename (default `translations.xlsx`).    |
-| `excel.sheetName` | `string`   | no       | Worksheet name (default `Translations`).         |
-| `ai.provider`     | `string`   | no       | One of `openai`, `deepl`, `anthropic`, `gemini`. |
-| `ai.apiKey`       | `string`   | no       | API key (falls back to a provider env var).      |
-| `ai.model`        | `string`   | no       | Provider model id (e.g. `gpt-5-mini`).           |
+| Option            | Type       | Required | Description                                                                                  |
+| ----------------- | ---------- | -------- | -------------------------------------------------------------------------------------------- |
+| `input`           | `string`   | yes      | Path to the source i18n directory.                                                           |
+| `output`          | `string`   | no       | Output / translations directory (default `./translations`).                                  |
+| `locales`         | `string[]` | yes      | List of supported locales.                                                                   |
+| `defaultLocale`   | `string`   | no       | Reference locale used for validation and sync.                                               |
+| `framework`       | `string`   | no       | One of `i18next`, `ngx-translate`, `react-intl`, `none`.                                     |
+| `namespaces`      | `object`   | no       | Optional `locale-dir` or `locale-prefix` layout.                                             |
+| `excel.file`      | `string`   | no       | Excel filename (default `translations.xlsx`).                                                |
+| `excel.sheetName` | `string`   | no       | Worksheet name (default `Translations`).                                                     |
+| `ai.provider`     | `string`   | no       | `openai` or `deepl` (released); `anthropic` / `gemini` require `LANGSYNC_AI_EXPERIMENTAL=1`. |
+| `ai.apiKey`       | `string`   | no       | API key (falls back to a provider env var).                                                  |
+| `ai.model`        | `string`   | no       | Provider model id (e.g. `gpt-5-mini`).                                                       |
 
 JSON, JS, and MJS config files are also supported via cosmiconfig. Omit `namespaces` for the default `<input>/<locale>.json` layout, or set `namespaces.structure` to `locale-dir` or `locale-prefix` for per-namespace files.
 

@@ -13,7 +13,7 @@ file.
 ## Usage
 
 ```bash
-langsync translate [--provider <provider>] [--model <model>] [--dry-run]
+langsync translate [--provider <provider>] [--model <model>] [--max-keys <n>] [--dry-run]
 ```
 
 ## Flags
@@ -22,6 +22,7 @@ langsync translate [--provider <provider>] [--model <model>] [--dry-run]
 | ------------------- | ----------------- | ------------------------------------------- |
 | `--provider <name>` | config / `openai` | Override the configured AI provider.        |
 | `--model <model>`   | config / default  | Override the configured provider model.     |
+| `--max-keys <n>`    | unlimited         | Cap how many empty values a run translates. |
 | `--dry-run`         | `false`           | Report what would be translated, no writes. |
 
 ## Providers
@@ -29,7 +30,7 @@ langsync translate [--provider <provider>] [--model <model>] [--dry-run]
 | Provider    | Status              | API key env var     |
 | ----------- | ------------------- | ------------------- |
 | `openai`    | Released            | `OPENAI_API_KEY`    |
-| `deepl`     | Experimental (flag) | `DEEPL_API_KEY`     |
+| `deepl`     | Released            | `DEEPL_API_KEY`     |
 | `anthropic` | Experimental (flag) | `ANTHROPIC_API_KEY` |
 | `gemini`    | Experimental (flag) | `GEMINI_API_KEY`    |
 

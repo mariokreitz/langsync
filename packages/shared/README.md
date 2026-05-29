@@ -11,7 +11,14 @@ workspace package.
 ```ts
 import { logger } from '@langsync/shared/logger';
 import { loadConfig, defineConfig, LangSyncConfigSchema } from '@langsync/shared/config';
-import { loadLocaleFiles, readJson, writeJson, pathExists } from '@langsync/shared/fs';
+import {
+  loadLocaleFiles,
+  resolveLocaleFilePath,
+  indexLocaleFiles,
+  readJson,
+  writeJson,
+  pathExists,
+} from '@langsync/shared/fs';
 import type { Locale, LocaleFile, TranslationTree, I18nFramework } from '@langsync/shared/types';
 ```
 
@@ -31,11 +38,28 @@ when no config is found.
 
 Identity helper for typed `langsync.config.ts` authoring.
 
-### `loadLocaleFiles({ cwd, inputDir, locales })`
+### `loadLocaleFiles({ cwd, inputDir, locales, namespaces? })`
 
-Load every configured locale file from `<inputDir>/<locale>.json`. Missing
-files are returned as empty trees so downstream tooling can still operate on
-a complete locale list.
+Load every configured locale file. In the default single-file mode it reads
+`<inputDir>/<locale>.json`. When `namespaces` is set, it loads per-namespace
+files using the `locale-dir` (`<inputDir>/<locale>/<namespace>.json`) or
+`locale-prefix` (`<inputDir>/<locale>.<namespace>.json`) structure, and
+synthesizes empty entries so every locale exposes the full namespace set.
+Returned files are `LoadedLocaleFile`s (each carries `namespace` and an
+`exists` flag); missing files are returned as empty trees so downstream
+tooling can still operate on a complete locale list.
+
+### `resolveLocaleFilePath({ cwd, inputDir, locale, namespace, namespaces? })`
+
+Resolve the on-disk path for a given locale/namespace, validating the
+namespace (rejects empty, absolute, backslash, `/`-containing locale-prefix,
+and `.`/`..` traversal segments) and guaranteeing the path stays within the
+input directory.
+
+### `indexLocaleFiles(files)`
+
+Build a `LocaleFileIndex` from loaded files: the flat `files` list, the sorted
+`namespaces` set, and a `byLocale` lookup keyed by locale then namespace.
 
 ### `readJson`, `writeJson`, `pathExists`
 
