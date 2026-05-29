@@ -1,5 +1,17 @@
 # @langsync/excel-engine
 
+## 0.2.0
+
+### Minor Changes
+
+- a74652c: excel-engine: namespace-aware export/import. Export emits a `namespace` column when any file has a namespace; import returns a `{ format, locales }` discriminator and reconstructs per-namespace trees. Single-file workbooks remain fully supported. NOTE: the excel-engine TypeScript contract changed (`ExportOptions.locales` → `files`; `ImportResult` adds `format` and `namespace`).
+
+### Patch Changes
+
+- Updated dependencies [8511d14]
+  - @langsync/shared@0.2.1
+  - @langsync/core@0.1.2
+
 ## 0.1.1
 
 ### Patch Changes
