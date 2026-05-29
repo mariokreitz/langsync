@@ -19,13 +19,10 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Enable auto-merge for GitHub Actions patch and minor updates
+      - name: Enable auto-merge for patch and minor updates (all ecosystems)
         if: |
-          steps.metadata.outputs.package-ecosystem == 'github_actions' &&
-          (
-            steps.metadata.outputs.update-type == 'version-update:semver-patch' ||
-            steps.metadata.outputs.update-type == 'version-update:semver-minor'
-          )
+          steps.metadata.outputs.update-type == 'version-update:semver-patch' ||
+          steps.metadata.outputs.update-type == 'version-update:semver-minor'
         run: gh pr merge --auto --squash "$PR_URL"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
