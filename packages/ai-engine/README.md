@@ -8,15 +8,16 @@ are added without touching existing code (Open/Closed Principle).
 
 ## Providers
 
-| Provider    | Status         | API key env var     |
-| ----------- | -------------- | ------------------- |
-| `openai`    | Released       | `OPENAI_API_KEY`    |
-| `deepl`     | Planned (flag) | `DEEPL_API_KEY`     |
-| `anthropic` | Planned (flag) | `ANTHROPIC_API_KEY` |
-| `gemini`    | Planned (flag) | `GEMINI_API_KEY`    |
+| Provider    | Status              | API key env var     | Notes                                          |
+| ----------- | ------------------- | ------------------- | ---------------------------------------------- |
+| `openai`    | Released            | `OPENAI_API_KEY`    | Default model `gpt-4o-mini`.                   |
+| `deepl`     | Experimental (flag) | `DEEPL_API_KEY`     | Free/pro endpoint auto-detected via `:fx` key. |
+| `anthropic` | Experimental (flag) | `ANTHROPIC_API_KEY` | Default model `claude-3-5-haiku-latest`.       |
+| `gemini`    | Experimental (flag) | `GEMINI_API_KEY`    | Default model `gemini-2.0-flash`.              |
 
-Unreleased providers are gated behind `LANGSYNC_AI_EXPERIMENTAL=1` and are not
-shown in the CLI until they ship.
+The experimental providers are implemented and tested, but stay gated behind
+`LANGSYNC_AI_EXPERIMENTAL=1` and are not shown in the CLI until each graduates
+to released after smoke-testing.
 
 ## Usage
 
