@@ -43,7 +43,7 @@ describe('GeminiAdapter', () => {
     expect(result).toBe('Hallo');
     const [url, init] = fetchImpl.mock.calls[0]!;
     expect(url).toBe(
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=k',
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash:generateContent?key=k',
     );
     const body = JSON.parse(init!.body as string) as GeminiBody;
     expect(body.systemInstruction.parts[0]!.text).toContain('from en to de');

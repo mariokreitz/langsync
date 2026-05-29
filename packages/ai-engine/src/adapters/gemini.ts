@@ -1,6 +1,6 @@
 import { type AdapterOptions, type TranslateRequest, type TranslationAdapter } from '../types.js';
 
-const DEFAULT_MODEL = 'gemini-2.0-flash';
+const DEFAULT_MODEL = 'gemini-3-flash';
 const BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
 
 interface GeminiPart {

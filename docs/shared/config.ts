@@ -12,6 +12,6 @@ export default defineConfig({
   },
   ai: {
     provider: 'openai',
-    model: 'gpt-4o-mini',
+    model: 'gpt-5-mini',
   },
 });

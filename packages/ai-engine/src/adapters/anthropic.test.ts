@@ -59,7 +59,7 @@ describe('AnthropicAdapter', () => {
     const def = new AnthropicAdapter({ apiKey: 'k', fetchImpl });
     await def.translate({ text: 'Hi', sourceLocale: 'en', targetLocale: 'de' });
     let body = JSON.parse(fetchImpl.mock.calls[0]![1]!.body as string) as MessagesBody;
-    expect(body.model).toBe('claude-3-5-haiku-latest');
+    expect(body.model).toBe('claude-haiku-4-5');
 
     const custom = new AnthropicAdapter({ apiKey: 'k', model: 'claude-foo', fetchImpl });
     await custom.translate({ text: 'Hi', sourceLocale: 'en', targetLocale: 'de' });

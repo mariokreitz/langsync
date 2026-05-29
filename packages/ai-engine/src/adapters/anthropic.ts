@@ -1,6 +1,6 @@
 import { type AdapterOptions, type TranslateRequest, type TranslationAdapter } from '../types.js';
 
-const DEFAULT_MODEL = 'claude-3-5-haiku-latest';
+const DEFAULT_MODEL = 'claude-haiku-4-5';
 const ENDPOINT = 'https://api.anthropic.com/v1/messages';
 const ANTHROPIC_VERSION = '2023-06-01';
 const MAX_TOKENS = 1024;

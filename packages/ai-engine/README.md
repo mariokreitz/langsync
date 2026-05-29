@@ -10,10 +10,10 @@ are added without touching existing code (Open/Closed Principle).
 
 | Provider    | Status              | API key env var     | Notes                                          |
 | ----------- | ------------------- | ------------------- | ---------------------------------------------- |
-| `openai`    | Released            | `OPENAI_API_KEY`    | Default model `gpt-4o-mini`.                   |
+| `openai`    | Released            | `OPENAI_API_KEY`    | Default model `gpt-5-mini`.                    |
 | `deepl`     | Experimental (flag) | `DEEPL_API_KEY`     | Free/pro endpoint auto-detected via `:fx` key. |
-| `anthropic` | Experimental (flag) | `ANTHROPIC_API_KEY` | Default model `claude-3-5-haiku-latest`.       |
-| `gemini`    | Experimental (flag) | `GEMINI_API_KEY`    | Default model `gemini-2.0-flash`.              |
+| `anthropic` | Experimental (flag) | `ANTHROPIC_API_KEY` | Default model `claude-haiku-4-5`.              |
+| `gemini`    | Experimental (flag) | `GEMINI_API_KEY`    | Default model `gemini-3-flash`.                |
 
 The experimental providers are implemented and tested, but stay gated behind
 `LANGSYNC_AI_EXPERIMENTAL=1` and are not shown in the CLI until each graduates
@@ -24,7 +24,7 @@ to released after smoke-testing.
 ```ts
 import { createAdapter, fillEmptyTranslations } from '@langsync/ai-engine';
 
-const adapter = createAdapter({ provider: 'openai', model: 'gpt-4o-mini' });
+const adapter = createAdapter({ provider: 'openai', model: 'gpt-5-mini' });
 
 const { tree, translatedKeys } = await fillEmptyTranslations({
   reference: { greet: 'Hello' },

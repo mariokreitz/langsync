@@ -123,7 +123,7 @@ export default defineConfig({
   },
   ai: {
     provider: 'openai',
-    model: 'gpt-4o-mini',
+    model: 'gpt-5-mini',
   },
 });
 ```
@@ -139,7 +139,7 @@ export default defineConfig({
 | `excel.sheetName` | `string`   | no       | Worksheet name (default `Translations`).         |
 | `ai.provider`     | `string`   | no       | One of `openai`, `deepl`, `anthropic`, `gemini`. |
 | `ai.apiKey`       | `string`   | no       | API key (falls back to a provider env var).      |
-| `ai.model`        | `string`   | no       | Provider model id (e.g. `gpt-4o-mini`).          |
+| `ai.model`        | `string`   | no       | Provider model id (e.g. `gpt-5-mini`).           |
 
 JSON, JS, and MJS config files are also supported via cosmiconfig.
 
