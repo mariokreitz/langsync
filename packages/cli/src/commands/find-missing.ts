@@ -1,10 +1,14 @@
 import { type Command } from 'commander';
 import chalk from 'chalk';
 import { logger } from '@langsync/shared/logger';
-import { runFindMissing } from './find-missing/run.js';
+import { runFindMissing, type MissingEntry } from './find-missing/run.js';
 
 interface FindMissingFlags {
   reporter: 'pretty' | 'json';
+}
+
+function formatMissingEntry(entry: MissingEntry): string {
+  return entry.namespace === null ? entry.key : `${entry.namespace}:${entry.key}`;
 }
 
 export function registerFindMissingCommand(program: Command): void {
@@ -25,7 +29,7 @@ export function registerFindMissingCommand(program: Command): void {
         } else {
           for (const [locale, keys] of Object.entries(missingByLocale)) {
             logger.warn(`${chalk.cyan(locale)} is missing ${keys.length} key(s):`);
-            for (const key of keys) console.log(`  - ${key}`);
+            for (const entry of keys) console.log(`  - ${formatMissingEntry(entry)}`);
           }
         }
 

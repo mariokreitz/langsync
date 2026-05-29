@@ -20,13 +20,17 @@ export function registerExportCommand(program: Command): void {
     .action(async (flags: ExportExcelFlags) => {
       try {
         const cwd = process.cwd();
-        const { file, locales } = await runExportExcel({
+        const { file, locales, namespaces } = await runExportExcel({
           cwd,
           file: flags.file,
           sheetName: flags.sheet,
         });
+        const namespaceSummary =
+          namespaces.length > 0
+            ? ` across ${chalk.cyan(String(namespaces.length))} namespace(s)`
+            : '';
         logger.success(
-          `Exported ${chalk.cyan(String(locales.length))} locale(s) to ${chalk.bold(
+          `Exported ${chalk.cyan(String(locales.length))} locale(s)${namespaceSummary} to ${chalk.bold(
             relative(cwd, file),
           )}`,
         );

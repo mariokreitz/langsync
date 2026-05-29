@@ -1,14 +1,20 @@
-import { loadConfig } from '@langsync/shared/config';
-import { loadLocaleFiles } from '@langsync/shared/fs';
 import { validateLocales, type ValidationIssue } from '@langsync/core';
+import { loadConfig } from '@langsync/shared/config';
+import { indexLocaleFiles, loadLocaleFiles } from '@langsync/shared/fs';
+import { noNamespacesError } from '../shared/namespace-error.js';
 
 export interface RunValidateOptions {
   cwd: string;
 }
 
+export type NamespacedValidationIssue = ValidationIssue & {
+  namespace: string | null;
+  path: string;
+};
+
 export interface RunValidateResult {
   referenceLocale: string;
-  issues: ValidationIssue[];
+  issues: NamespacedValidationIssue[];
   exitCode: 0 | 1;
 }
 
@@ -25,13 +31,6 @@ export async function runValidate(options: RunValidateOptions): Promise<RunValid
   }
 
   const { config } = loaded;
-  if (config.namespaces) {
-    throw new Error(
-      'Namespace support for this command is coming in a follow-up release. ' +
-        'Remove the `namespaces` block from your config to use single-file mode.',
-    );
-  }
-
   const referenceLocale = config.defaultLocale ?? config.locales[0]!;
 
   const files = await loadLocaleFiles({
@@ -40,8 +39,37 @@ export async function runValidate(options: RunValidateOptions): Promise<RunValid
     locales: config.locales,
     namespaces: config.namespaces,
   });
+  const index = indexLocaleFiles(files);
+  const namespaced = config.namespaces !== undefined;
+  if (namespaced && index.namespaces.length === 0) {
+    throw noNamespacesError(referenceLocale, config.input);
+  }
+  const nsKeys: (string | null)[] = namespaced ? index.namespaces : [null];
 
-  const issues = validateLocales(files, referenceLocale);
+  const issues: NamespacedValidationIssue[] = [];
+  for (const nsKey of nsKeys) {
+    const namespaceFiles = config.locales
+      .map((locale) => index.byLocale[locale]?.get(nsKey))
+      .filter((file) => file !== undefined);
+    const namespaceIssues = validateLocales(namespaceFiles, referenceLocale);
+    for (const issue of namespaceIssues) {
+      const file = index.byLocale[issue.locale]?.get(nsKey);
+      if (!file) continue;
+      issues.push({ ...issue, namespace: nsKey, path: file.path });
+    }
+  }
+
+  issues.sort((a, b) => {
+    const namespaceA = a.namespace ?? '';
+    const namespaceB = b.namespace ?? '';
+    return (
+      a.locale.localeCompare(b.locale) ||
+      namespaceA.localeCompare(namespaceB) ||
+      a.key.localeCompare(b.key) ||
+      a.type.localeCompare(b.type)
+    );
+  });
+
   const hasErrors = issues.some((i) => i.type === 'missing' || i.type === 'extra');
 
   return {

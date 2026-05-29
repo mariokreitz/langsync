@@ -1,19 +1,20 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type * as SharedFs from '@langsync/shared/fs';
 
 vi.mock('@langsync/shared/config', () => ({ loadConfig: vi.fn() }));
-vi.mock('@langsync/shared/fs', () => ({
-  loadLocaleFiles: vi.fn(),
-  writeJson: vi.fn(),
-}));
+vi.mock('@langsync/shared/fs', async () => {
+  const actual = await vi.importActual<typeof SharedFs>('@langsync/shared/fs');
+  return { ...actual, loadLocaleFiles: vi.fn(), writeJson: vi.fn() };
+});
 vi.mock('@langsync/ai-engine', async () => {
   const actual = await vi.importActual<typeof AiEngine>('@langsync/ai-engine');
   return { ...actual, createAdapter: vi.fn() };
 });
 
 import type * as AiEngine from '@langsync/ai-engine';
-import { loadConfig } from '@langsync/shared/config';
-import { loadLocaleFiles, writeJson } from '@langsync/shared/fs';
 import { createAdapter, type TranslateRequest, type TranslationAdapter } from '@langsync/ai-engine';
+import { loadConfig } from '@langsync/shared/config';
+import { loadLocaleFiles, writeJson, type LoadedLocaleFile } from '@langsync/shared/fs';
 import { runTranslate } from './run.js';
 
 const mockedLoadConfig = vi.mocked(loadConfig);
@@ -26,6 +27,17 @@ function fakeAdapter(): TranslationAdapter {
     provider: 'openai',
     translate: (req: TranslateRequest) => Promise.resolve(`tr(${req.text})`),
   };
+}
+
+function file(
+  locale: string,
+  namespace: string | null,
+  translations: object,
+  exists = true,
+): LoadedLocaleFile {
+  const path =
+    namespace === null ? `/p/i18n/${locale}.json` : `/p/i18n/${locale}/${namespace}.json`;
+  return { locale, namespace, path, exists, translations };
 }
 
 const baseConfig = {
@@ -43,242 +55,177 @@ describe('runTranslate', () => {
   });
   afterEach(() => vi.clearAllMocks());
 
-  it('throws when no config is found', async () => {
-    mockedLoadConfig.mockResolvedValue(null);
-    await expect(runTranslate({ cwd: '/p' })).rejects.toThrow(/No LangSync config/);
-  });
-
-  it('throws and loads no files when namespaces are configured', async () => {
-    mockedLoadConfig.mockResolvedValue({
-      ...baseConfig,
-      config: { ...baseConfig.config, namespaces: { structure: 'locale-dir' } },
-    });
-    await expect(runTranslate({ cwd: '/p' })).rejects.toThrow(/follow-up release/i);
-    expect(mockedLoadLocaleFiles).not.toHaveBeenCalled();
-  });
-
-  it('fills empty target values and writes them', async () => {
+  it('keeps single-file translation behavior with structured result entries', async () => {
     mockedLoadConfig.mockResolvedValue(baseConfig);
     mockedLoadLocaleFiles.mockResolvedValue([
-      {
-        locale: 'en',
-        namespace: null,
-        path: '/p/i18n/en.json',
-        exists: true,
-        translations: { a: 'A', b: 'B' },
-      },
-      {
-        locale: 'de',
-        namespace: null,
-        path: '/p/i18n/de.json',
-        exists: true,
-        translations: { a: 'AA', b: '' },
-      },
+      file('en', null, { a: 'A', b: 'B' }),
+      file('de', null, { a: 'AA', b: '' }),
     ]);
 
     const result = await runTranslate({ cwd: '/p' });
 
     expect(mockedWriteJson).toHaveBeenCalledWith('/p/i18n/de.json', { a: 'AA', b: 'tr(B)' });
-    expect(result.translatedByLocale.de).toEqual(['b']);
-    expect(result.written).toEqual(['/p/i18n/de.json']);
+    expect(result.translatedByLocale.de).toEqual([
+      { namespace: null, key: 'b', path: '/p/i18n/de.json' },
+    ]);
     expect(result.skippedByLocale).toEqual({});
     expect(result.totalTranslatableKeys).toBe(1);
   });
 
-  it('honors dryRun and does not write', async () => {
-    mockedLoadConfig.mockResolvedValue(baseConfig);
-    mockedLoadLocaleFiles.mockResolvedValue([
-      {
-        locale: 'en',
-        namespace: null,
-        path: '/p/i18n/en.json',
-        exists: true,
-        translations: { a: 'A' },
-      },
-      {
-        locale: 'de',
-        namespace: null,
-        path: '/p/i18n/de.json',
-        exists: true,
-        translations: { a: '' },
-      },
-    ]);
-
-    const result = await runTranslate({ cwd: '/p', dryRun: true });
-
-    expect(mockedWriteJson).not.toHaveBeenCalled();
-    expect(result.written).toEqual([]);
-    expect(result.planned).toEqual(['/p/i18n/de.json']);
-  });
-
-  it('passes the provider override to the adapter factory', async () => {
-    mockedLoadConfig.mockResolvedValue(baseConfig);
-    mockedLoadLocaleFiles.mockResolvedValue([
-      {
-        locale: 'en',
-        namespace: null,
-        path: '/p/i18n/en.json',
-        exists: true,
-        translations: { a: 'A' },
-      },
-      {
-        locale: 'de',
-        namespace: null,
-        path: '/p/i18n/de.json',
-        exists: true,
-        translations: { a: 'AA' },
-      },
-    ]);
-
-    await runTranslate({ cwd: '/p', provider: 'openai' });
-    expect(mockedCreateAdapter).toHaveBeenCalledWith(
-      expect.objectContaining({ provider: 'openai' }),
-    );
-  });
-
-  it('passes the model override to the adapter factory', async () => {
+  it('translates missing values across multiple namespaces and creates missing target files', async () => {
     mockedLoadConfig.mockResolvedValue({
-      config: {
-        input: './i18n',
-        output: './o',
-        locales: ['en', 'de'],
-        defaultLocale: 'en',
-        ai: { provider: 'openai', model: 'config-model' },
-      },
-      filepath: '/p/langsync.config.ts',
+      ...baseConfig,
+      config: { ...baseConfig.config, namespaces: { structure: 'locale-dir' } },
     });
     mockedLoadLocaleFiles.mockResolvedValue([
-      {
-        locale: 'en',
-        namespace: null,
-        path: '/p/i18n/en.json',
-        exists: true,
-        translations: { a: 'A' },
-      },
-      {
-        locale: 'de',
-        namespace: null,
-        path: '/p/i18n/de.json',
-        exists: true,
-        translations: { a: 'AA' },
-      },
-    ]);
-
-    await runTranslate({ cwd: '/p', model: 'flag-model' });
-    expect(mockedCreateAdapter).toHaveBeenCalledWith(
-      expect.objectContaining({ model: 'flag-model' }),
-    );
-  });
-
-  it('falls back to the configured model when no override is given', async () => {
-    mockedLoadConfig.mockResolvedValue({
-      config: {
-        input: './i18n',
-        output: './o',
-        locales: ['en', 'de'],
-        defaultLocale: 'en',
-        ai: { provider: 'anthropic', model: 'config-model' },
-      },
-      filepath: '/p/langsync.config.ts',
-    });
-    mockedLoadLocaleFiles.mockResolvedValue([
-      {
-        locale: 'en',
-        namespace: null,
-        path: '/p/i18n/en.json',
-        exists: true,
-        translations: { a: 'A' },
-      },
-      {
-        locale: 'de',
-        namespace: null,
-        path: '/p/i18n/de.json',
-        exists: true,
-        translations: { a: 'AA' },
-      },
+      file('en', 'auth/login', { title: 'Login' }),
+      file('en', 'common', { ok: 'OK' }),
+      file('de', 'auth/login', {}, false),
+      file('de', 'common', { ok: '' }),
     ]);
 
     const result = await runTranslate({ cwd: '/p' });
-    expect(mockedCreateAdapter).toHaveBeenCalledWith(
-      expect.objectContaining({ provider: 'anthropic', model: 'config-model' }),
-    );
-    expect(result.provider).toBe('anthropic');
-  });
 
-  it('throws when the reference locale file is missing', async () => {
-    mockedLoadConfig.mockResolvedValue(baseConfig);
-    mockedLoadLocaleFiles.mockResolvedValue([
-      { locale: 'de', namespace: null, path: '/p/i18n/de.json', exists: true, translations: {} },
+    expect(mockedWriteJson).toHaveBeenCalledWith('/p/i18n/de/auth/login.json', {
+      title: 'tr(Login)',
+    });
+    expect(mockedWriteJson).toHaveBeenCalledWith('/p/i18n/de/common.json', { ok: 'tr(OK)' });
+    expect(result.planned).toEqual(['/p/i18n/de/auth/login.json', '/p/i18n/de/common.json']);
+    expect(result.translatedByLocale.de).toEqual([
+      { namespace: 'auth/login', key: 'title', path: '/p/i18n/de/auth/login.json' },
+      { namespace: 'common', key: 'ok', path: '/p/i18n/de/common.json' },
     ]);
-
-    await expect(runTranslate({ cwd: '/p' })).rejects.toThrow(/reference locale/i);
   });
 
-  it('honors maxKeys: limits translated keys across locales', async () => {
+  it('honors maxKeys across locale and namespace candidate ordering', async () => {
     mockedLoadConfig.mockResolvedValue({
       config: {
         input: './i18n',
         output: './o',
         locales: ['en', 'de', 'fr'],
         defaultLocale: 'en',
+        namespaces: { structure: 'locale-dir' },
       },
       filepath: '/p/langsync.config.ts',
     });
     mockedLoadLocaleFiles.mockResolvedValue([
-      {
-        locale: 'en',
-        namespace: null,
-        path: '/p/i18n/en.json',
-        exists: true,
-        translations: { a: 'A', b: 'B', c: 'C' },
-      },
-      {
-        locale: 'de',
-        namespace: null,
-        path: '/p/i18n/de.json',
-        exists: true,
-        translations: { a: '', b: '', c: '' },
-      },
-      {
-        locale: 'fr',
-        namespace: null,
-        path: '/p/i18n/fr.json',
-        exists: true,
-        translations: { a: '', b: '', c: '' },
-      },
+      file('en', 'a', { one: 'One', two: 'Two' }),
+      file('en', 'b', { three: 'Three' }),
+      file('de', 'a', {}),
+      file('de', 'b', {}),
+      file('fr', 'a', {}),
+      file('fr', 'b', {}),
     ]);
 
-    const result = await runTranslate({ cwd: '/p', maxKeys: 4 });
+    const result = await runTranslate({ cwd: '/p', maxKeys: 2 });
 
-    const totalTranslated = Object.values(result.translatedByLocale).reduce(
-      (sum, keys) => sum + keys.length,
-      0,
-    );
-    expect(totalTranslated).toBe(4);
-    expect(result.totalTranslatableKeys).toBe(6); // 3 keys × 2 target locales
+    expect(result.totalTranslatableKeys).toBe(6);
+    expect(result.translatedByLocale.de).toEqual([
+      { namespace: 'a', key: 'one', path: '/p/i18n/de/a.json' },
+      { namespace: 'a', key: 'two', path: '/p/i18n/de/a.json' },
+    ]);
+    expect(result.skippedByLocale.de).toEqual([
+      { namespace: 'b', key: 'three', path: '/p/i18n/de/b.json' },
+    ]);
+    expect(result.skippedByLocale.fr).toHaveLength(3);
+    expect(mockedWriteJson).toHaveBeenCalledTimes(1);
   });
 
-  it('reports totalTranslatableKeys correctly when all targets are filled', async () => {
-    mockedLoadConfig.mockResolvedValue(baseConfig);
+  it('records intra-file skipped keys exactly once when a single file is partially budgeted', async () => {
+    mockedLoadConfig.mockResolvedValue({
+      ...baseConfig,
+      config: { ...baseConfig.config, namespaces: { structure: 'locale-dir' } },
+    });
     mockedLoadLocaleFiles.mockResolvedValue([
-      {
-        locale: 'en',
-        namespace: null,
-        path: '/p/i18n/en.json',
-        exists: true,
-        translations: { a: 'A' },
-      },
-      {
-        locale: 'de',
-        namespace: null,
-        path: '/p/i18n/de.json',
-        exists: true,
-        translations: { a: 'AA' },
-      },
+      file('en', 'a', { one: 'One', two: 'Two', three: 'Three' }),
+      file('de', 'a', { one: '', two: '', three: '' }),
+    ]);
+
+    const result = await runTranslate({ cwd: '/p', maxKeys: 1 });
+
+    expect(result.totalTranslatableKeys).toBe(3);
+    expect(mockedWriteJson).toHaveBeenCalledTimes(1);
+    expect(mockedWriteJson).toHaveBeenCalledWith('/p/i18n/de/a.json', {
+      one: 'tr(One)',
+      two: '',
+      three: '',
+    });
+    expect(result.translatedByLocale.de).toEqual([
+      { namespace: 'a', key: 'one', path: '/p/i18n/de/a.json' },
+    ]);
+    expect(result.skippedByLocale.de).toEqual([
+      { namespace: 'a', key: 'two', path: '/p/i18n/de/a.json' },
+      { namespace: 'a', key: 'three', path: '/p/i18n/de/a.json' },
+    ]);
+  });
+
+  it('leaves extra target-only namespaces untouched', async () => {
+    mockedLoadConfig.mockResolvedValue({
+      ...baseConfig,
+      config: { ...baseConfig.config, namespaces: { structure: 'locale-dir' } },
+    });
+    mockedLoadLocaleFiles.mockResolvedValue([
+      file('en', 'legacy', {}, false),
+      file('de', 'legacy', { old: '' }),
     ]);
 
     const result = await runTranslate({ cwd: '/p' });
+
+    expect(mockedWriteJson).not.toHaveBeenCalled();
     expect(result.totalTranslatableKeys).toBe(0);
+    expect(result.planned).toEqual([]);
+  });
+
+  it('honors dryRun for namespaced writes', async () => {
+    mockedLoadConfig.mockResolvedValue({
+      ...baseConfig,
+      config: { ...baseConfig.config, namespaces: { structure: 'locale-prefix' } },
+    });
+    mockedLoadLocaleFiles.mockResolvedValue([
+      { ...file('en', 'common', { a: 'A' }), path: '/p/i18n/en.common.json' },
+      { ...file('de', 'common', { a: '' }), path: '/p/i18n/de.common.json' },
+    ]);
+
+    const result = await runTranslate({ cwd: '/p', dryRun: true });
+
+    expect(mockedWriteJson).not.toHaveBeenCalled();
     expect(result.written).toEqual([]);
+    expect(result.planned).toEqual(['/p/i18n/de.common.json']);
+  });
+
+  it('throws D10 before creating an adapter when no namespaces are discovered', async () => {
+    mockedLoadConfig.mockResolvedValue({
+      ...baseConfig,
+      config: { ...baseConfig.config, namespaces: { structure: 'locale-dir' } },
+    });
+    mockedLoadLocaleFiles.mockResolvedValue([]);
+
+    await expect(runTranslate({ cwd: '/p' })).rejects.toThrow(
+      'No namespace files found under "./i18n"',
+    );
+    expect(mockedCreateAdapter).not.toHaveBeenCalled();
+  });
+
+  it('passes provider and model overrides to the adapter factory', async () => {
+    mockedLoadConfig.mockResolvedValue({
+      ...baseConfig,
+      config: { ...baseConfig.config, ai: { provider: 'anthropic', model: 'config-model' } },
+    });
+    mockedLoadLocaleFiles.mockResolvedValue([
+      file('en', null, { a: 'A' }),
+      file('de', null, { a: 'AA' }),
+    ]);
+
+    const result = await runTranslate({ cwd: '/p', provider: 'openai', model: 'flag-model' });
+
+    expect(mockedCreateAdapter).toHaveBeenCalledWith(
+      expect.objectContaining({ provider: 'openai', model: 'flag-model' }),
+    );
+    expect(result.provider).toBe('openai');
+  });
+
+  it('throws when no config is found', async () => {
+    mockedLoadConfig.mockResolvedValue(null);
+    await expect(runTranslate({ cwd: '/p' })).rejects.toThrow(/No LangSync config/);
   });
 });

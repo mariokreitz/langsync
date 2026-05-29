@@ -1,17 +1,27 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type * as SharedFs from '@langsync/shared/fs';
 
 vi.mock('@langsync/shared/config', () => ({ loadConfig: vi.fn() }));
-vi.mock('@langsync/shared/fs', () => ({ loadLocaleFiles: vi.fn() }));
+vi.mock('@langsync/shared/fs', async () => {
+  const actual = await vi.importActual<typeof SharedFs>('@langsync/shared/fs');
+  return { ...actual, loadLocaleFiles: vi.fn() };
+});
 vi.mock('@langsync/excel-engine', () => ({ exportToExcel: vi.fn() }));
 
-import { loadConfig } from '@langsync/shared/config';
-import { loadLocaleFiles } from '@langsync/shared/fs';
 import { exportToExcel } from '@langsync/excel-engine';
+import { loadConfig } from '@langsync/shared/config';
+import { loadLocaleFiles, type LoadedLocaleFile } from '@langsync/shared/fs';
 import { runExportExcel } from './run.js';
 
 const mockedLoadConfig = vi.mocked(loadConfig);
 const mockedLoadLocaleFiles = vi.mocked(loadLocaleFiles);
 const mockedExportToExcel = vi.mocked(exportToExcel);
+
+function file(locale: string, namespace: string | null, translations: object): LoadedLocaleFile {
+  const path =
+    namespace === null ? `/p/i18n/${locale}.json` : `/p/i18n/${locale}/${namespace}.json`;
+  return { locale, namespace, path, exists: true, translations };
+}
 
 describe('runExportExcel', () => {
   beforeEach(() => {
@@ -21,23 +31,7 @@ describe('runExportExcel', () => {
   });
   afterEach(() => vi.clearAllMocks());
 
-  it('throws and loads no files when namespaces are configured', async () => {
-    mockedLoadConfig.mockResolvedValue({
-      config: {
-        input: './i18n',
-        output: './o',
-        locales: ['en', 'de'],
-        excel: { file: 'i18n.xlsx', sheetName: 'Sheet' },
-        namespaces: { structure: 'locale-prefix' },
-      },
-      filepath: '/p/langsync.config.ts',
-    });
-    await expect(runExportExcel({ cwd: '/p' })).rejects.toThrow(/follow-up release/i);
-    expect(mockedLoadLocaleFiles).not.toHaveBeenCalled();
-    expect(mockedExportToExcel).not.toHaveBeenCalled();
-  });
-
-  it('exports to the configured excel.file path', async () => {
+  it('still exports single-file projects', async () => {
     mockedLoadConfig.mockResolvedValue({
       config: {
         input: './i18n',
@@ -48,20 +42,8 @@ describe('runExportExcel', () => {
       filepath: '/p/langsync.config.ts',
     });
     mockedLoadLocaleFiles.mockResolvedValue([
-      {
-        locale: 'en',
-        namespace: null,
-        path: '/p/i18n/en.json',
-        exists: true,
-        translations: { a: 'A' },
-      },
-      {
-        locale: 'de',
-        namespace: null,
-        path: '/p/i18n/de.json',
-        exists: true,
-        translations: { a: 'A' },
-      },
+      file('en', null, { a: 'A' }),
+      file('de', null, { a: 'A' }),
     ]);
     mockedExportToExcel.mockResolvedValue();
 
@@ -75,38 +57,69 @@ describe('runExportExcel', () => {
         { locale: 'de', namespace: null, translations: { a: 'A' } },
       ],
     });
-    expect(result.file).toBe('/p/i18n.xlsx');
+    expect(result).toMatchObject({ file: '/p/i18n.xlsx', namespaces: [] });
   });
 
-  it('falls back to translations.xlsx / Translations defaults when excel config missing', async () => {
+  it('passes namespace-aware input to the excel engine and returns namespaces', async () => {
     mockedLoadConfig.mockResolvedValue({
-      config: { input: './i18n', output: './o', locales: ['en'] },
+      config: {
+        input: './i18n',
+        output: './o',
+        locales: ['en', 'de'],
+        namespaces: { structure: 'locale-dir' },
+      },
       filepath: '/p/langsync.config.ts',
     });
     mockedLoadLocaleFiles.mockResolvedValue([
-      { locale: 'en', namespace: null, path: '/p/i18n/en.json', exists: true, translations: {} },
+      file('en', 'common', { ok: 'OK' }),
+      file('en', 'auth/login', { title: 'Login' }),
+      file('de', 'common', { ok: 'Okay' }),
+      file('de', 'auth/login', {}),
     ]);
     mockedExportToExcel.mockResolvedValue();
 
     const result = await runExportExcel({ cwd: '/p' });
 
-    expect(mockedExportToExcel).toHaveBeenCalledWith(
-      expect.objectContaining({ file: '/p/translations.xlsx', sheetName: 'Translations' }),
+    const exportArg = mockedExportToExcel.mock.calls[0]![0];
+    expect(exportArg.files).toEqual(
+      expect.arrayContaining([
+        { locale: 'en', namespace: 'auth/login', translations: { title: 'Login' } },
+        { locale: 'de', namespace: 'common', translations: { ok: 'Okay' } },
+      ]),
     );
-    expect(result.file).toBe('/p/translations.xlsx');
+    expect(result.namespaces).toEqual(['auth/login', 'common']);
   });
 
-  it('uses --file override when provided', async () => {
+  it('throws the shared D10 error when no namespaces are discovered', async () => {
+    mockedLoadConfig.mockResolvedValue({
+      config: {
+        input: './i18n',
+        output: './o',
+        locales: ['en'],
+        defaultLocale: 'en',
+        namespaces: { structure: 'locale-prefix' },
+      },
+      filepath: '/p/langsync.config.ts',
+    });
+    mockedLoadLocaleFiles.mockResolvedValue([]);
+
+    await expect(runExportExcel({ cwd: '/p' })).rejects.toThrow(
+      'No namespace files found under "./i18n"',
+    );
+    expect(mockedExportToExcel).not.toHaveBeenCalled();
+  });
+
+  it('uses file and sheet defaults and overrides', async () => {
     mockedLoadConfig.mockResolvedValue({
       config: { input: './i18n', output: './o', locales: ['en'] },
       filepath: '/p/langsync.config.ts',
     });
-    mockedLoadLocaleFiles.mockResolvedValue([
-      { locale: 'en', namespace: null, path: '/p/i18n/en.json', exists: true, translations: {} },
-    ]);
+    mockedLoadLocaleFiles.mockResolvedValue([file('en', null, {})]);
     mockedExportToExcel.mockResolvedValue();
 
-    const result = await runExportExcel({ cwd: '/p', file: 'custom.xlsx' });
+    const result = await runExportExcel({ cwd: '/p', file: 'custom.xlsx', sheetName: 'Custom' });
+
     expect(result.file).toBe('/p/custom.xlsx');
+    expect(result.sheetName).toBe('Custom');
   });
 });

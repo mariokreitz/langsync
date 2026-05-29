@@ -52,11 +52,24 @@ describe('runWatchPass', () => {
   });
   afterEach(() => vi.clearAllMocks());
 
+  it('throws before running sync when namespaces are configured', async () => {
+    mockedLoadConfig.mockResolvedValue({
+      ...config,
+      config: { ...config.config, namespaces: { structure: 'locale-dir' } },
+    });
+
+    await expect(runWatchPass({ cwd: '/p' })).rejects.toThrow(/follow-up release/i);
+    expect(mockedRunSync).not.toHaveBeenCalled();
+    expect(mockedLoadLocaleFiles).not.toHaveBeenCalled();
+  });
+
   it('syncs then validates and reports remaining issues', async () => {
     mockedRunSync.mockResolvedValue({
       referenceLocale: 'en',
       written: ['/p/i18n/de.json'],
       planned: ['/p/i18n/de.json'],
+      unchanged: [],
+      diffsByPath: {},
     });
     mockedLoadConfig.mockResolvedValue(config);
     mockedLoadLocaleFiles.mockResolvedValue([

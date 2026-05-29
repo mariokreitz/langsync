@@ -1,7 +1,7 @@
-import { join, resolve } from 'node:path';
-import { loadConfig } from '@langsync/shared/config';
-import { writeJson } from '@langsync/shared/fs';
+import { resolve } from 'node:path';
 import { importFromExcel } from '@langsync/excel-engine';
+import { loadConfig } from '@langsync/shared/config';
+import { resolveLocaleFilePath, writeJson } from '@langsync/shared/fs';
 
 export interface RunImportExcelOptions {
   cwd: string;
@@ -33,22 +33,20 @@ export async function runImportExcel(
     throw new Error('No LangSync config found. Run `langsync init` first.');
   }
   const { config } = loaded;
-  if (config.namespaces) {
-    throw new Error(
-      'Namespace support for this command is coming in a follow-up release. ' +
-        'Remove the `namespaces` block from your config to use single-file mode.',
-    );
-  }
 
   const file = resolve(options.cwd, options.file ?? config.excel?.file ?? DEFAULT_FILE);
   const sheetName = options.sheetName ?? config.excel?.sheetName ?? DEFAULT_SHEET;
-  const inputAbs = resolve(options.cwd, config.input);
   const configuredLocales = new Set(config.locales);
 
   const result = await importFromExcel(file, sheetName);
-  if (result.format !== 'single-file') {
+  if (!config.namespaces && result.format === 'namespaced') {
     throw new Error(
-      'Cannot import a namespaced workbook into a single-file project. Configure a `namespaces` block (coming in a follow-up release).',
+      'Cannot import a namespaced workbook into a single-file project. Configure a `namespaces` block first.',
+    );
+  }
+  if (config.namespaces && result.format === 'single-file') {
+    throw new Error(
+      'Cannot import a single-file workbook into a namespaced project. Export a namespaced workbook or remove the `namespaces` block.',
     );
   }
 
@@ -61,7 +59,13 @@ export async function runImportExcel(
       skipped.push(entry.locale);
       continue;
     }
-    const path = join(inputAbs, `${entry.locale}.json`);
+    const path = resolveLocaleFilePath({
+      cwd: options.cwd,
+      inputDir: config.input,
+      locale: entry.locale,
+      namespace: entry.namespace,
+      namespaces: config.namespaces,
+    });
     planned.push(path);
     if (!options.dryRun) {
       await writeJson(path, entry.translations);

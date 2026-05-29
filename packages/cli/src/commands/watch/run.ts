@@ -46,11 +46,6 @@ export async function resolveWatchDir(cwd: string): Promise<string> {
  * Returned to the watch command so it can render a compact summary.
  */
 export async function runWatchPass(options: RunWatchPassOptions): Promise<RunWatchPassResult> {
-  const { referenceLocale, written, unchanged, diffsByPath } = await runSync({
-    cwd: options.cwd,
-    dryRun: options.dryRun,
-  });
-
   const loaded = await loadConfig(options.cwd);
   if (!loaded) {
     throw new Error('No LangSync config found. Run `langsync init` first.');
@@ -61,6 +56,11 @@ export async function runWatchPass(options: RunWatchPassOptions): Promise<RunWat
         'Remove the `namespaces` block from your config to use single-file mode.',
     );
   }
+
+  const { referenceLocale, written, unchanged, diffsByPath } = await runSync({
+    cwd: options.cwd,
+    dryRun: options.dryRun,
+  });
 
   const files = await loadLocaleFiles({
     cwd: options.cwd,

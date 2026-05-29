@@ -1,12 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type * as SharedFs from '@langsync/shared/fs';
 
 vi.mock('@langsync/shared/config', () => ({ loadConfig: vi.fn() }));
-vi.mock('@langsync/shared/fs', () => ({ writeJson: vi.fn() }));
+vi.mock('@langsync/shared/fs', async () => {
+  const actual = await vi.importActual<typeof SharedFs>('@langsync/shared/fs');
+  return { ...actual, writeJson: vi.fn() };
+});
 vi.mock('@langsync/excel-engine', () => ({ importFromExcel: vi.fn() }));
 
+import { importFromExcel } from '@langsync/excel-engine';
 import { loadConfig } from '@langsync/shared/config';
 import { writeJson } from '@langsync/shared/fs';
-import { importFromExcel } from '@langsync/excel-engine';
 import { runImportExcel } from './run.js';
 
 const mockedLoadConfig = vi.mocked(loadConfig);
@@ -21,23 +25,7 @@ describe('runImportExcel', () => {
   });
   afterEach(() => vi.clearAllMocks());
 
-  it('throws and imports nothing when namespaces are configured', async () => {
-    mockedLoadConfig.mockResolvedValue({
-      config: {
-        input: './i18n',
-        output: './o',
-        locales: ['en', 'de'],
-        excel: { file: 'translations.xlsx', sheetName: 'Translations' },
-        namespaces: { structure: 'locale-dir' },
-      },
-      filepath: '/p/langsync.config.ts',
-    });
-    await expect(runImportExcel({ cwd: '/p' })).rejects.toThrow(/follow-up release/i);
-    expect(mockedImportFromExcel).not.toHaveBeenCalled();
-    expect(mockedWriteJson).not.toHaveBeenCalled();
-  });
-
-  it('writes each imported locale into `<input>/<locale>.json`', async () => {
+  it('keeps single-file imports writing `<input>/<locale>.json`', async () => {
     mockedLoadConfig.mockResolvedValue({
       config: {
         input: './i18n',
@@ -63,20 +51,51 @@ describe('runImportExcel', () => {
     expect(result.written).toEqual(['/p/i18n/en.json', '/p/i18n/de.json']);
   });
 
-  it('honors dryRun: reports planned writes without touching disk', async () => {
+  it('writes namespaced locale-dir JSON files to resolved paths', async () => {
     mockedLoadConfig.mockResolvedValue({
-      config: { input: './i18n', output: './o', locales: ['en'] },
+      config: {
+        input: './i18n',
+        output: './o',
+        locales: ['en', 'de'],
+        namespaces: { structure: 'locale-dir' },
+      },
       filepath: '/p/langsync.config.ts',
     });
     mockedImportFromExcel.mockResolvedValue({
-      format: 'single-file',
-      locales: [{ locale: 'en', namespace: null, translations: { hi: 'Hi' } }],
+      format: 'namespaced',
+      locales: [
+        { locale: 'en', namespace: 'auth/login', translations: { title: 'Login' } },
+        { locale: 'de', namespace: 'common', translations: { ok: 'OK' } },
+      ],
+    });
+
+    const result = await runImportExcel({ cwd: '/p' });
+
+    expect(mockedWriteJson).toHaveBeenCalledWith('/p/i18n/en/auth/login.json', { title: 'Login' });
+    expect(mockedWriteJson).toHaveBeenCalledWith('/p/i18n/de/common.json', { ok: 'OK' });
+    expect(result.planned).toEqual(['/p/i18n/en/auth/login.json', '/p/i18n/de/common.json']);
+  });
+
+  it('plans namespaced locale-prefix writes in dry-run without writing', async () => {
+    mockedLoadConfig.mockResolvedValue({
+      config: {
+        input: './i18n',
+        output: './o',
+        locales: ['en'],
+        namespaces: { structure: 'locale-prefix' },
+      },
+      filepath: '/p/langsync.config.ts',
+    });
+    mockedImportFromExcel.mockResolvedValue({
+      format: 'namespaced',
+      locales: [{ locale: 'en', namespace: 'admin.users', translations: { title: 'Users' } }],
     });
 
     const result = await runImportExcel({ cwd: '/p', dryRun: true });
+
     expect(mockedWriteJson).not.toHaveBeenCalled();
     expect(result.written).toEqual([]);
-    expect(result.planned).toEqual(['/p/i18n/en.json']);
+    expect(result.planned).toEqual(['/p/i18n/en.admin.users.json']);
   });
 
   it('rejects namespaced workbooks in single-file projects without writing files', async () => {
@@ -90,7 +109,28 @@ describe('runImportExcel', () => {
     });
 
     await expect(runImportExcel({ cwd: '/p' })).rejects.toThrow(
-      'Cannot import a namespaced workbook into a single-file project. Configure a `namespaces` block (coming in a follow-up release).',
+      'Cannot import a namespaced workbook into a single-file project',
+    );
+    expect(mockedWriteJson).not.toHaveBeenCalled();
+  });
+
+  it('rejects single-file workbooks in namespaced projects without writing files', async () => {
+    mockedLoadConfig.mockResolvedValue({
+      config: {
+        input: './i18n',
+        output: './o',
+        locales: ['en'],
+        namespaces: { structure: 'locale-dir' },
+      },
+      filepath: '/p/langsync.config.ts',
+    });
+    mockedImportFromExcel.mockResolvedValue({
+      format: 'single-file',
+      locales: [{ locale: 'en', namespace: null, translations: { hi: 'Hi' } }],
+    });
+
+    await expect(runImportExcel({ cwd: '/p' })).rejects.toThrow(
+      'Cannot import a single-file workbook into a namespaced project',
     );
     expect(mockedWriteJson).not.toHaveBeenCalled();
   });
