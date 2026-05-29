@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1.7
-FROM node:22-alpine AS deps
+FROM node:26-alpine AS deps
 RUN corepack enable && corepack prepare pnpm@11.4.0 --activate
 WORKDIR /repo
 
@@ -15,7 +15,7 @@ COPY packages/shared/package.json ./packages/shared/
 # Those files are copied in the builder stage, so scripts must be deferred.
 RUN pnpm install --frozen-lockfile --filter @langsync/docs... --ignore-scripts
 
-FROM node:22-alpine AS builder
+FROM node:26-alpine AS builder
 RUN corepack enable && corepack prepare pnpm@11.4.0 --activate
 WORKDIR /repo
 
@@ -26,7 +26,7 @@ COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN pnpm --filter @langsync/docs exec fumadocs-mdx && pnpm --filter @langsync/docs build
 
-FROM node:22-alpine AS runner
+FROM node:26-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production

@@ -77,6 +77,6 @@
     "@langsync/excel-engine": "workspace:*",
     "@langsync/ai-engine": "workspace:*",
     "@types/prompts": "^2.4.9",
-    "memfs": "^4.15.1"
+    "memfs": "^4.57.3"
   }
 }
