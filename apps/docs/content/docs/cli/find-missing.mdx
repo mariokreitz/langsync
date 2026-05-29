@@ -48,11 +48,16 @@ langsync find-missing --reporter json
 {
   "referenceLocale": "en",
   "missingByLocale": {
-    "de": ["greeting.bye"],
-    "fr": ["app.tagline", "greeting.bye"]
+    "de": [{ "namespace": null, "key": "greeting.bye", "path": "src/i18n/de.json" }],
+    "fr": [
+      { "namespace": null, "key": "app.tagline", "path": "src/i18n/fr.json" },
+      { "namespace": null, "key": "greeting.bye", "path": "src/i18n/fr.json" }
+    ]
   }
 }
 ```
 
-Namespaced JSON output includes namespace metadata so automated checks can
-separate identical keys from different namespace files.
+Each entry carries `namespace`, `key`, and the resolved file `path`. In
+single-file mode `namespace` is `null`; in namespaced mode it holds the
+namespace name, so automated checks can separate identical keys from
+different namespace files.
