@@ -1,6 +1,6 @@
 {
   "name": "@langsync/ai-engine",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "AI translation adapters (OpenAI, DeepL, Anthropic, Gemini) for LangSync.",
   "license": "MIT",
   "author": "Mario Kreitz",

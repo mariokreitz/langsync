@@ -1,6 +1,6 @@
 {
   "name": "@langsync/core",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Core engines (parsers, validators, sync) for LangSync.",
   "license": "MIT",
   "author": "Mario Kreitz",

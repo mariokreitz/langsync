@@ -65,7 +65,8 @@ jobs:
     name: Commit message lint
     if: |
       github.actor != 'dependabot[bot]' &&
-      github.actor != 'github-actions[bot]'
+      github.actor != 'github-actions[bot]' &&
+      !startsWith(github.ref_name, 'changeset-release/')
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -84,5 +85,5 @@ jobs:
 
       - name: Lint commit messages
         env:
-          BASE_REF: ${{ github.base_ref }}
+          BASE_REF: ${{ github.base_ref || 'main' }}
         run: pnpm exec commitlint --from "origin/${BASE_REF}" --to HEAD --verbose

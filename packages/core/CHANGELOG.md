@@ -1,5 +1,14 @@
 # @langsync/core
 
+## 0.1.1
+
+### Patch Changes
+
+- Updated dependencies [d19d177]
+- Updated dependencies [d1ab37a]
+- Updated dependencies [9d7c395]
+  - @langsync/shared@0.2.0
+
 ## 0.1.0
 
 ### Minor Changes
