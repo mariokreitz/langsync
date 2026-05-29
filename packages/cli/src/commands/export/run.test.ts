@@ -70,9 +70,9 @@ describe('runExportExcel', () => {
     expect(mockedExportToExcel).toHaveBeenCalledWith({
       file: '/p/i18n.xlsx',
       sheetName: 'Sheet',
-      locales: [
-        { locale: 'en', translations: { a: 'A' } },
-        { locale: 'de', translations: { a: 'A' } },
+      files: [
+        { locale: 'en', namespace: null, translations: { a: 'A' } },
+        { locale: 'de', namespace: null, translations: { a: 'A' } },
       ],
     });
     expect(result.file).toBe('/p/i18n.xlsx');

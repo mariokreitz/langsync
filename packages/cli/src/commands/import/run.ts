@@ -46,6 +46,11 @@ export async function runImportExcel(
   const configuredLocales = new Set(config.locales);
 
   const result = await importFromExcel(file, sheetName);
+  if (result.format !== 'single-file') {
+    throw new Error(
+      'Cannot import a namespaced workbook into a single-file project. Configure a `namespaces` block (coming in a follow-up release).',
+    );
+  }
 
   const planned: string[] = [];
   const written: string[] = [];

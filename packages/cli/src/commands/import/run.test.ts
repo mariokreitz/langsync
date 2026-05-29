@@ -48,9 +48,10 @@ describe('runImportExcel', () => {
       filepath: '/p/langsync.config.ts',
     });
     mockedImportFromExcel.mockResolvedValue({
+      format: 'single-file',
       locales: [
-        { locale: 'en', translations: { hi: 'Hi' } },
-        { locale: 'de', translations: { hi: 'Hallo' } },
+        { locale: 'en', namespace: null, translations: { hi: 'Hi' } },
+        { locale: 'de', namespace: null, translations: { hi: 'Hallo' } },
       ],
     });
 
@@ -68,7 +69,8 @@ describe('runImportExcel', () => {
       filepath: '/p/langsync.config.ts',
     });
     mockedImportFromExcel.mockResolvedValue({
-      locales: [{ locale: 'en', translations: { hi: 'Hi' } }],
+      format: 'single-file',
+      locales: [{ locale: 'en', namespace: null, translations: { hi: 'Hi' } }],
     });
 
     const result = await runImportExcel({ cwd: '/p', dryRun: true });
@@ -77,15 +79,32 @@ describe('runImportExcel', () => {
     expect(result.planned).toEqual(['/p/i18n/en.json']);
   });
 
+  it('rejects namespaced workbooks in single-file projects without writing files', async () => {
+    mockedLoadConfig.mockResolvedValue({
+      config: { input: './i18n', output: './o', locales: ['en'] },
+      filepath: '/p/langsync.config.ts',
+    });
+    mockedImportFromExcel.mockResolvedValue({
+      format: 'namespaced',
+      locales: [{ locale: 'en', namespace: 'common', translations: { hi: 'Hi' } }],
+    });
+
+    await expect(runImportExcel({ cwd: '/p' })).rejects.toThrow(
+      'Cannot import a namespaced workbook into a single-file project. Configure a `namespaces` block (coming in a follow-up release).',
+    );
+    expect(mockedWriteJson).not.toHaveBeenCalled();
+  });
+
   it('skips locales not present in the configured locale list', async () => {
     mockedLoadConfig.mockResolvedValue({
       config: { input: './i18n', output: './o', locales: ['en'] },
       filepath: '/p/langsync.config.ts',
     });
     mockedImportFromExcel.mockResolvedValue({
+      format: 'single-file',
       locales: [
-        { locale: 'en', translations: { hi: 'Hi' } },
-        { locale: 'jp', translations: { hi: 'Konnichiwa' } },
+        { locale: 'en', namespace: null, translations: { hi: 'Hi' } },
+        { locale: 'jp', namespace: null, translations: { hi: 'Konnichiwa' } },
       ],
     });
 
