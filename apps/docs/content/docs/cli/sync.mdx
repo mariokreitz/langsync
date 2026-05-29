@@ -8,6 +8,9 @@ locale, preserving existing translations and inserting empty placeholders
 for keys that do not yet have a translation. Keys that no longer exist in
 the reference locale are removed from the targets.
 
+In namespaced projects, the command runs the same synchronization per
+namespace file.
+
 ## Usage
 
 ```bash
@@ -26,10 +29,20 @@ langsync sync [--dry-run]
 - Existing target values are preserved; the reference never overwrites them.
 - Keys present in the target but missing in the reference are removed.
 - The reference locale file itself is never modified.
+- With `namespaces` configured, each namespace is synchronized independently.
+- Missing namespace files in target locales are synthesized as empty trees and
+  written when they need placeholders.
+- Extra target-only namespace files are emptied to `{}` when they contain keys;
+  they are never deleted.
+- If no namespace files are discovered while `namespaces` is configured, the
+  command fails with an actionable error.
+
+Namespaced output labels keys as `namespace:key` when key identity would
+otherwise be ambiguous.
 
 ## Complete example
 
-Before — `de.json` is missing a key the reference has:
+Before, `de.json` is missing a key the reference has:
 
 ```json title="src/i18n/en.json"
 { "greeting": { "hello": "Hello", "bye": "Goodbye" } }
@@ -44,7 +57,7 @@ $ npx langsync sync
 langsync ✔ Updated src/i18n/de.json
 ```
 
-After — the missing key is added as an empty placeholder, the existing
+After, the missing key is added as an empty placeholder, and the existing
 translation is untouched:
 
 ```json title="src/i18n/de.json"

@@ -26,7 +26,7 @@ describe('writeConfig', () => {
     vol.reset();
   });
 
-  it('writes a typed TS config and locale stubs', async () => {
+  it('writes a typed TS config and single-file locale stubs by default', async () => {
     const result = await writeConfig({
       cwd: '/project',
       answers: ANSWERS,
@@ -44,10 +44,11 @@ describe('writeConfig', () => {
     expect(content).toContain("import { defineConfig } from '@mariokreitz/langsync';");
     expect(content).toContain("locales: ['en', 'de']");
     expect(content).toContain("framework: 'i18next'");
+    expect(content).not.toContain('namespaces:');
     expect(vol.readFileSync('/project/src/i18n/en.json', 'utf-8')).toBe('{}\n');
   });
 
-  it('writes a JSON config when format=json', async () => {
+  it('writes a JSON config without namespaces by default', async () => {
     const result = await writeConfig({
       cwd: '/project',
       answers: ANSWERS,
@@ -65,6 +66,68 @@ describe('writeConfig', () => {
       defaultLocale: 'en',
       framework: 'i18next',
     });
+    expect(parsed).not.toHaveProperty('namespaces');
+  });
+
+  it('emits locale-dir namespaces in TS config and scaffolds nested namespace files', async () => {
+    const result = await writeConfig({
+      cwd: '/project',
+      answers: {
+        ...ANSWERS,
+        namespaces: { structure: 'locale-dir' },
+        initialNamespaces: ['common', 'auth/login'],
+      },
+      format: 'ts',
+      force: false,
+    });
+
+    expect(result.createdLocaleFiles).toEqual([
+      '/project/src/i18n/en/common.json',
+      '/project/src/i18n/en/auth/login.json',
+      '/project/src/i18n/de/common.json',
+      '/project/src/i18n/de/auth/login.json',
+    ]);
+    const content = vol.readFileSync('/project/langsync.config.ts', 'utf-8') as string;
+    expect(content).toContain("namespaces: { structure: 'locale-dir' }");
+    expect(vol.readFileSync('/project/src/i18n/en/auth/login.json', 'utf-8')).toBe('{}\n');
+  });
+
+  it('emits locale-prefix namespaces in JSON config and scaffolds flat namespace files', async () => {
+    const result = await writeConfig({
+      cwd: '/project',
+      answers: {
+        ...ANSWERS,
+        namespaces: { structure: 'locale-prefix' },
+        initialNamespaces: ['common', 'admin.users'],
+      },
+      format: 'json',
+      force: false,
+    });
+
+    expect(result.createdLocaleFiles).toEqual([
+      '/project/src/i18n/en.common.json',
+      '/project/src/i18n/en.admin.users.json',
+      '/project/src/i18n/de.common.json',
+      '/project/src/i18n/de.admin.users.json',
+    ]);
+    const content = vol.readFileSync('/project/langsync.config.json', 'utf-8') as string;
+    const parsed = JSON.parse(content) as Record<string, unknown>;
+    expect(parsed).toMatchObject({ namespaces: { structure: 'locale-prefix' } });
+    expect(vol.readFileSync('/project/src/i18n/de.admin.users.json', 'utf-8')).toBe('{}\n');
+  });
+
+  it('defaults namespaced scaffolding to common when initial namespaces are omitted', async () => {
+    const result = await writeConfig({
+      cwd: '/project',
+      answers: { ...ANSWERS, namespaces: { structure: 'locale-dir' } },
+      format: 'ts',
+      force: false,
+    });
+
+    expect(result.createdLocaleFiles).toEqual([
+      '/project/src/i18n/en/common.json',
+      '/project/src/i18n/de/common.json',
+    ]);
   });
 
   it('omits the framework field when "none"', async () => {

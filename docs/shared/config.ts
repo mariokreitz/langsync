@@ -6,6 +6,9 @@ export default defineConfig({
   locales: ['en', 'de', 'fr'],
   defaultLocale: 'en',
   framework: 'i18next',
+  // Opt in to namespaced files when your project outgrows one file per locale.
+  // namespaces: { structure: 'locale-dir' }, // ./src/i18n/en/common.json
+  // namespaces: { structure: 'locale-prefix' }, // ./src/i18n/en.common.json
   excel: {
     file: 'translations.xlsx',
     sheetName: 'Translations',

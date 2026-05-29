@@ -33,6 +33,7 @@ consistent across every locale and every collaborator.
 - **Zero-friction Excel I/O** — round-trip translations with non-technical translators.
 - **Strict validation** — fail CI when a locale drifts.
 - **Framework integrations** — drop-in support for `i18next`, `ngx-translate`, and `react-intl`.
+- **Namespace support** — scale from one file per locale to folder or prefix-based namespace layouts.
 - **Beautiful terminal UX** — interactive prompts, spinners, and structured output.
 - **CI-ready** — JSON reporters and proper exit codes for every command.
 
@@ -59,7 +60,7 @@ yarn add -D @mariokreitz/langsync
 ### Initialize
 
 Run the interactive setup. LangSync detects your i18n framework from
-`package.json`, scaffolds `langsync.config.ts`, and creates per-locale stubs.
+`package.json`, scaffolds `langsync.config.ts`, and creates single-file or namespaced locale stubs.
 
 ```bash
 npx langsync init
@@ -89,13 +90,13 @@ npx langsync sync
 | Command                 | Description                                                         |
 | ----------------------- | ------------------------------------------------------------------- |
 | `langsync init`         | Initialize a typed `langsync.config.ts` and scaffold locale files.  |
-| `langsync validate`     | Report missing, extra, and empty keys; exits non-zero on errors.    |
+| `langsync validate`     | Report missing, extra, and empty keys across locales/namespaces.    |
 | `langsync find-missing` | Report missing keys per locale; exits non-zero on errors.           |
-| `langsync sync`         | Synchronize keys from the reference locale into every other locale. |
+| `langsync sync`         | Synchronize reference keys into each target locale or namespace.    |
 | `langsync translate`    | Fill empty values in non-reference locales using an AI provider.    |
 | `langsync watch`        | Watch locale files and run incremental sync + validation on change. |
-| `langsync export excel` | Export all locales into a single `.xlsx` workbook.                  |
-| `langsync import excel` | Import translations from a workbook back into JSON files.           |
+| `langsync export excel` | Export locales/namespaces into a single `.xlsx` workbook.           |
+| `langsync import excel` | Import workbook translations back into configured JSON files.       |
 
 All read commands support `--reporter json` for CI integrations. All write
 commands support `--dry-run` for safe previews.
@@ -117,6 +118,9 @@ export default defineConfig({
   locales: ['en', 'de', 'fr'],
   defaultLocale: 'en',
   framework: 'i18next',
+  // Opt in to namespaced files when your project outgrows one file per locale.
+  // namespaces: { structure: 'locale-dir' }, // ./src/i18n/en/common.json
+  // namespaces: { structure: 'locale-prefix' }, // ./src/i18n/en.common.json
   excel: {
     file: 'translations.xlsx',
     sheetName: 'Translations',
@@ -135,13 +139,14 @@ export default defineConfig({
 | `locales`         | `string[]` | yes      | List of supported locales.                       |
 | `defaultLocale`   | `string`   | no       | Reference locale used for validation and sync.   |
 | `framework`       | `string`   | no       | One of `i18next`, `ngx-translate`, `react-intl`. |
+| `namespaces`      | `object`   | no       | Optional `locale-dir` or `locale-prefix` layout. |
 | `excel.file`      | `string`   | no       | Excel filename (default `translations.xlsx`).    |
 | `excel.sheetName` | `string`   | no       | Worksheet name (default `Translations`).         |
 | `ai.provider`     | `string`   | no       | One of `openai`, `deepl`, `anthropic`, `gemini`. |
 | `ai.apiKey`       | `string`   | no       | API key (falls back to a provider env var).      |
 | `ai.model`        | `string`   | no       | Provider model id (e.g. `gpt-5-mini`).           |
 
-JSON, JS, and MJS config files are also supported via cosmiconfig.
+JSON, JS, and MJS config files are also supported via cosmiconfig. Omit `namespaces` for the default `<input>/<locale>.json` layout, or set `namespaces.structure` to `locale-dir` or `locale-prefix` for per-namespace files.
 
 ---
 

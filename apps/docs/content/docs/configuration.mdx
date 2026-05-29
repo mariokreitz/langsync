@@ -10,7 +10,7 @@ LangSync configuration lives at the root of your project. The CLI discovers
 it via [cosmiconfig](https://github.com/cosmiconfig/cosmiconfig), so any of
 the following are picked up automatically:
 
-- `langsync.config.ts` (recommended — typed)
+- `langsync.config.ts` (recommended, typed)
 - `langsync.config.js`
 - `langsync.config.mjs`
 - `langsync.config.json`
@@ -107,13 +107,129 @@ export default defineConfig({
 
 | Option          | Type       | Required | Default                  | Description                                              |
 | --------------- | ---------- | -------- | ------------------------ | -------------------------------------------------------- |
-| `input`         | `string`   | yes      | —                        | Directory containing per-locale JSON files.              |
-| `output`        | `string`   | yes      | —                        | Output directory for Excel exports and reports.          |
-| `locales`       | `string[]` | yes      | —                        | List of locale codes you support.                        |
+| `input`         | `string`   | yes      | -                        | Directory containing locale JSON files.                  |
+| `output`        | `string`   | yes      | -                        | Output directory for Excel exports and reports.          |
+| `locales`       | `string[]` | yes      | -                        | List of locale codes you support.                        |
 | `defaultLocale` | `string`   | no       | First entry in `locales` | Reference locale used by `validate` and `sync`.          |
 | `framework`     | `string`   | no       | omitted                  | One of `i18next`, `ngx-translate`, `react-intl`, `none`. Omit it or set `none` to disable built-in integration. |
+| `namespaces`    | `object`   | no       | omitted                  | Opt-in namespace layout. Omit for one file per locale.   |
 | `excel`         | `object`   | no       | see below                | Excel I/O settings.                                      |
-| `ai`            | `object`   | no       | see below                | AI translation settings (used by `translate`).           |
+| `ai`            | `object`   | no       | see below                | AI translation settings used by `translate`.             |
+
+### `namespaces`
+
+`namespaces` is optional. Omit it to keep the default single-file layout:
+
+```text
+src/i18n/
+  en.json
+  de.json
+  fr.json
+```
+
+Add the block only when you want LangSync to discover and operate on multiple
+namespace files per locale.
+
+```ts title="langsync.config.ts"
+export default defineConfig({
+  input: './src/i18n',
+  output: './translations',
+  locales: ['en', 'de', 'fr'],
+  defaultLocale: 'en',
+  namespaces: { structure: 'locale-dir' },
+});
+```
+
+| Option                 | Type                               | Description                                 |
+| ---------------------- | ---------------------------------- | ------------------------------------------- |
+| `namespaces.structure` | `'locale-dir' \| 'locale-prefix'` | Selects the on-disk namespace file layout. |
+
+<Tabs items={['Single file', 'locale-dir', 'locale-prefix']}>
+<Tab value="Single file">
+
+No `namespaces` block. Each locale has one JSON file.
+
+```text
+src/i18n/
+  en.json
+  de.json
+  fr.json
+```
+
+Use this for small and medium projects that prefer a compact locale tree.
+
+</Tab>
+<Tab value="locale-dir">
+
+```ts
+namespaces: { structure: 'locale-dir' }
+```
+
+Each locale gets a directory. The namespace path is relative to that locale
+folder, so recursive namespaces are supported.
+
+```text
+src/i18n/
+  en/
+    common.json
+    auth/login.json
+  de/
+    common.json
+    auth/login.json
+  fr/
+    common.json
+    auth/login.json
+```
+
+`auth/login` is reported as the namespace `auth/login` on every platform.
+
+</Tab>
+<Tab value="locale-prefix">
+
+```ts
+namespaces: { structure: 'locale-prefix' }
+```
+
+All files stay in the input directory. The locale prefix identifies the locale,
+and the remainder becomes the namespace.
+
+```text
+src/i18n/
+  en.common.json
+  en.admin.users.json
+  de.common.json
+  de.admin.users.json
+  fr.common.json
+  fr.admin.users.json
+```
+
+Namespace names may contain dots, such as `admin.users`.
+
+</Tab>
+</Tabs>
+
+### Single-file vs namespaced behavior
+
+| Area | Single-file layout | Namespaced layouts |
+| ---- | ------------------ | ------------------ |
+| Config | Omit `namespaces`. | Set `namespaces: { structure: 'locale-dir' }` or `namespaces: { structure: 'locale-prefix' }`. |
+| Files | `<input>/<locale>.json` | `<input>/<locale>/<namespace>.json` or `<input>/<locale>.<namespace>.json` |
+| Commands | Operate on each locale file. | Operate independently per namespace file. |
+| Output labels | Keys are shown as `key`. | Keys are shown as `namespace:key` where needed to disambiguate. |
+| Excel header | `key, <locale...>` | `namespace, key, <locale...>` |
+
+<Callout title="Migration notes">
+  Existing projects are unaffected because namespaces are opt-in. Add the `namespaces` block only
+  after moving files into one of the supported layouts. LangSync does not guess layouts, migrate files,
+  or delete target-only namespace files automatically.
+</Callout>
+
+<Callout title="Namespaced edge cases">
+  With a `namespaces` block set, `sync`, `validate`, `find-missing`, `translate`, and `export` fail
+  with an actionable error if no namespace files are discovered. Missing whole namespace files in a
+  target locale are synthesized as empty trees. Extra target-only namespace files validate as `extra`
+  while they contain keys; `sync` empties them to `{}` and `translate` leaves them untouched.
+</Callout>
 
 ### `excel`
 
@@ -127,7 +243,7 @@ export default defineConfig({
 | Option     | Type     | Default          | Description                                               |
 | ---------- | -------- | ---------------- | --------------------------------------------------------- |
 | `provider` | `string` | `openai`         | One of `openai`, `deepl`, `anthropic`, `gemini`.          |
-| `apiKey`   | `string` | —                | API key. Falls back to the provider env var when omitted. |
+| `apiKey`   | `string` | -                | API key. Falls back to the provider env var when omitted. |
 | `model`    | `string` | provider default | Provider model id (e.g. `gpt-5-mini`).                    |
 
 Each provider reads its key from a dedicated environment variable when `apiKey`
@@ -148,17 +264,9 @@ is not set:
 
 ## Locale file layout
 
-LangSync expects one JSON file per locale at `<input>/<locale>.json`:
-
-```text
-src/i18n/
-  ├ en.json   ← reference (defaultLocale)
-  ├ de.json
-  └ fr.json
-```
-
-Each file is a free-form nested JSON tree. Keys are dot-notated internally
-(`greeting.hello`) so deeply nested structures are supported.
+Each JSON file is a free-form nested tree. Keys are dot-notated internally
+(`greeting.hello`) so deeply nested structures are supported in both
+single-file and namespaced layouts.
 
 ```json title="src/i18n/en.json"
 {
@@ -171,9 +279,9 @@ Each file is a free-form nested JSON tree. Keys are dot-notated internally
 ```
 
 <Callout title="Missing files are tolerated">
-  If a configured locale file doesn't exist on disk yet, LangSync treats it as an empty tree and
-  reports every reference key as `missing` (instead of crashing). Run `langsync sync` to scaffold it
-  with empty placeholders.
+  If a configured locale file or namespace file doesn't exist on disk yet, LangSync treats it as an
+  empty tree and reports every reference key as `missing` instead of crashing. Run `langsync sync` to
+  scaffold it with empty placeholders.
 </Callout>
 
 ## Resolution order

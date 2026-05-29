@@ -7,6 +7,9 @@ description: Find missing translation keys per locale.
 are missing from one or more other locales. It is a focused subset of
 [`langsync validate`](./validate).
 
+With `namespaces` configured, the command checks each discovered namespace
+independently.
+
 ## Usage
 
 ```bash
@@ -19,10 +22,21 @@ langsync find-missing [--reporter <pretty|json>]
 | ------------------- | -------- | ---------------------------------------------- |
 | `--reporter <kind>` | `pretty` | Output format. Use `json` for CI integrations. |
 
+## Namespaced behavior
+
+- Missing whole namespace files in target locales are synthesized as empty
+  trees, so every reference key in that namespace is reported as missing.
+- Extra target-only namespace files are outside this command's focused report;
+  use `langsync validate` to report them as `extra`.
+- If no namespace files are discovered while `namespaces` is configured, the
+  command fails with an actionable error.
+- Pretty output labels namespaced keys as `namespace:key`, for example
+  `common:app.title`.
+
 ## Exit codes
 
-- `0` — no missing keys.
-- `1` — at least one locale is missing one or more keys.
+- `0` - no missing keys.
+- `1` - at least one locale is missing one or more keys, or a runtime error.
 
 ## JSON reporter
 
@@ -39,3 +53,6 @@ langsync find-missing --reporter json
   }
 }
 ```
+
+Namespaced JSON output includes namespace metadata so automated checks can
+separate identical keys from different namespace files.

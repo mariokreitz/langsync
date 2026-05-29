@@ -5,13 +5,16 @@ description: Import translations from external formats.
 
 ## Subcommands
 
-- `langsync import excel` — import from an `.xlsx` workbook.
+- `langsync import excel` - import from an `.xlsx` workbook.
 
 ## `langsync import excel`
 
 Reads an Excel workbook produced by `langsync export excel` (or any workbook
-following the same layout) and writes each locale back to
-`<input>/<locale>.json`.
+following the same layout) and writes each locale back to the configured JSON
+files.
+
+Single-file projects write `<input>/<locale>.json`. Namespaced projects write
+one file per namespace using the configured namespace structure.
 
 ### Usage
 
@@ -27,12 +30,34 @@ langsync import excel [--file <path>] [--sheet <name>] [--dry-run]
 | `--sheet <name>` | from config | Worksheet name (overrides config).             |
 | `--dry-run`      | `false`     | Report planned writes without writing to disk. |
 
+### Workbook layouts
+
+Single-file imports expect the legacy header:
+
+```text
+key, en, de, fr
+```
+
+Namespaced imports expect:
+
+```text
+namespace, key, en, de, fr
+```
+
+The workbook layout must match the config layout:
+
+- A namespaced workbook imported into a single-file config errors clearly.
+- A legacy workbook imported into a namespaced config errors clearly.
+- Blank namespaces in namespaced workbooks are rejected.
+- Duplicate `(namespace, key)` rows are rejected.
+
 ### Behavior
 
 - Locales not listed in `locales` are skipped and reported as warnings.
-- Existing JSON files are overwritten with the imported values.
+- Existing JSON files are overwritten with the imported values for their file.
 - The expected workbook layout matches the
   [export layout](./export#workbook-layout).
+- Namespaced dry runs and writes report the exact target file paths.
 
 ### Complete example
 
