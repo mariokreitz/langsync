@@ -1,5 +1,25 @@
 # @langsync/excel-engine
 
+## 0.1.1
+
+### Patch Changes
+
+- d1ab37a: **tests**: Lift coverage hygiene to ≥90% across all packages.
+  - `@langsync/shared`: Add logger tests (100%), extend config tests to cover
+    `loadConfig` with mocked cosmiconfig (100%), add `readJson`/`writeJson`/
+    `pathExists` tests to fs suite (100% lines).
+  - `@langsync/excel-engine`: Fix vitest coverage config — `index.ts` was
+    incorrectly excluded from instrumentation; lines now at 97%.
+  - `@mariokreitz/langsync`: Add `ui/node-version.ts` tests; exclude thin
+    commander registration wrappers and interactive `prompt.ts` from coverage
+    instrumentation (those are integration-level entry points).
+
+- Updated dependencies [d19d177]
+- Updated dependencies [d1ab37a]
+- Updated dependencies [9d7c395]
+  - @langsync/shared@0.2.0
+  - @langsync/core@0.1.1
+
 ## 0.1.0
 
 ### Minor Changes

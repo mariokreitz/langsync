@@ -1,5 +1,129 @@
 # @mariokreitz/langsync
 
+## 0.5.0
+
+### Minor Changes
+
+- bdcb351: **translate**: Add `--max-keys` flag, dry-run key preview, structured error type, and DeepL graduation.
+
+  ### New features
+
+  **`translate --max-keys <n>`**
+  Limits the total number of keys translated per run. Keys are selected
+  deterministically: target locales in config order, then reference keys in
+  iteration order. Remaining keys are reported as skipped and not lost — run
+  again to translate the next batch.
+
+  ```sh
+  langsync translate --max-keys 50
+  ```
+
+  **Dry-run key preview**
+  `--dry-run` now shows a summary of what _would_ be translated before making
+  any API calls:
+
+  ```
+  [dry-run] Would translate 47 keys across 3 locales using openai.
+  [dry-run]   de: 20 key(s)
+  [dry-run]   fr: 15 key(s)
+  [dry-run]   es: 12 key(s)
+  ```
+
+  **`TranslationAdapterError`**
+  A new structured error class exported from `@langsync/ai-engine`. Adapters now
+  throw `TranslationAdapterError` with `provider` and `statusCode` fields. The
+  CLI surfaces actionable messages for common status codes (e.g. 429 rate limit).
+
+  **DeepL graduated to stable**
+  `deepl` is no longer behind `LANGSYNC_AI_EXPERIMENTAL=1`. Use it directly:
+
+  ```ts
+  // langsync.config.ts
+  ai: {
+    provider: 'deepl';
+  }
+  ```
+
+  Or via the flag:
+
+  ```sh
+  DEEPL_API_KEY=your_key langsync translate --provider deepl
+  ```
+
+  ### `RunTranslateResult` changes
+
+  Two new fields are added to `RunTranslateResult`:
+  - `skippedByLocale: Record<string, string[]>` — keys skipped due to `--max-keys`
+  - `totalTranslatableKeys: number` — count of empty target keys before any cap
+
+  ### `FillTranslationsResult` changes
+
+  `fillEmptyTranslations` now returns:
+  - `skippedKeys: string[]` — keys that were not translated due to `maxKeys`
+
+- d19d177: **config**: `output` is now optional in `defineConfig()` and `langsync.config.ts`.
+
+  Previously, `output` was a required field in the schema, which forced every
+  user to specify a path that no current command actually uses at runtime.
+
+  Changes:
+  - `output` has a default of `"./translations"` — existing configs that include
+    it explicitly continue to work unchanged.
+  - A new `LangSyncConfigInput` type is exported from both `@langsync/shared` and
+    `@mariokreitz/langsync`. This is the _authoring_ type (`z.input<Schema>`)
+    where `output` is genuinely optional. `LangSyncConfig` remains the runtime
+    type (`z.infer<Schema>`) with all defaults applied.
+  - `defineConfig()` now accepts `LangSyncConfigInput` so TypeScript correctly
+    marks `output` as optional in config files.
+  - `loadConfig()` now uses `safeParse` and throws a human-friendly error
+    message when the config is invalid (instead of an opaque Zod error dump).
+
+  **Migration:** No changes needed to existing configs. To take advantage of the
+  simplified minimum config:
+
+  ```ts
+  // Before
+  export default defineConfig({
+    input: './src/i18n',
+    output: './translations', // was required
+    locales: ['en', 'de'],
+  });
+
+  // After — output can be omitted
+  export default defineConfig({
+    input: './src/i18n',
+    locales: ['en', 'de'],
+  });
+  ```
+
+- e3f6ebc: **sync**: Skip writing locale files that are already in sync with the reference.
+  `runSync` now uses `diffTrees`/`hasChanges` before each write. Files with no
+  changes are added to `unchanged` in the result and skipped entirely — no
+  unnecessary disk I/O.
+
+  **watch**: The watch summary now shows per-file change counts
+  (`+2 keys, -1, ~3 changed`) and distinguishes between synced files and files
+  that were already up to date.
+
+  `RunSyncResult` gains two new fields:
+  - `unchanged: string[]` — paths that were skipped (already in sync)
+  - `diffsByPath: Record<string, TreeDiff>` — diff details for changed files,
+    keyed by absolute file path
+
+  `RunWatchPassResult` gains the same two fields, forwarded from `runSync`.
+
+### Patch Changes
+
+- d1ab37a: **tests**: Lift coverage hygiene to ≥90% across all packages.
+  - `@langsync/shared`: Add logger tests (100%), extend config tests to cover
+    `loadConfig` with mocked cosmiconfig (100%), add `readJson`/`writeJson`/
+    `pathExists` tests to fs suite (100% lines).
+  - `@langsync/excel-engine`: Fix vitest coverage config — `index.ts` was
+    incorrectly excluded from instrumentation; lines now at 97%.
+  - `@mariokreitz/langsync`: Add `ui/node-version.ts` tests; exclude thin
+    commander registration wrappers and interactive `prompt.ts` from coverage
+    instrumentation (those are integration-level entry points).
+
 ## 0.4.1
 
 ### Patch Changes
