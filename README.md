@@ -153,7 +153,7 @@ LangSync auto-detects the following i18n libraries during `langsync init`:
 - **ngx-translate** (Angular)
 - **react-intl** / `@formatjs/intl`
 
-You can also set `framework: 'none'` for custom setups.
+Omit `framework` or set `framework: 'none'` for custom setups.
 
 ---
 

@@ -4,6 +4,9 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
 concurrency:
   group: pr-${{ github.ref }}
   cancel-in-progress: true
@@ -22,8 +25,10 @@ jobs:
           fetch-depth: 0
 
       - name: Check for changeset when published packages change
+        env:
+          BASE_REF: ${{ github.base_ref }}
         run: |
-          BASE="${{ github.base_ref }}"
+          BASE="$BASE_REF"
 
           CHANGED=$(git diff --name-only "origin/${BASE}...HEAD" \
             -- packages/cli/src \
@@ -72,4 +77,6 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       - name: Lint commit messages
-        run: pnpm exec commitlint --from "origin/${{ github.base_ref }}" --to HEAD --verbose
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: pnpm exec commitlint --from "origin/${BASE_REF}" --to HEAD --verbose

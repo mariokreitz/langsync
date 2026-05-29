@@ -111,7 +111,7 @@ export default defineConfig({
 | `output`        | `string`   | yes      | —                        | Output directory for Excel exports and reports.          |
 | `locales`       | `string[]` | yes      | —                        | List of locale codes you support.                        |
 | `defaultLocale` | `string`   | no       | First entry in `locales` | Reference locale used by `validate` and `sync`.          |
-| `framework`     | `string`   | no       | `none`                   | One of `i18next`, `ngx-translate`, `react-intl`, `none`. |
+| `framework`     | `string`   | no       | omitted                  | One of `i18next`, `ngx-translate`, `react-intl`, `none`. Omit it or set `none` to disable built-in integration. |
 | `excel`         | `object`   | no       | see below                | Excel I/O settings.                                      |
 | `ai`            | `object`   | no       | see below                | AI translation settings (used by `translate`).           |
 

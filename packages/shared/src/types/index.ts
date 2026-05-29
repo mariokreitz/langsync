@@ -10,4 +10,4 @@ export interface LocaleFile {
   translations: TranslationTree;
 }
 
-export type I18nFramework = 'i18next' | 'ngx-translate' | 'react-intl';
+export type I18nFramework = 'i18next' | 'ngx-translate' | 'react-intl' | 'none';

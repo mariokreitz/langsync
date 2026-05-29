@@ -94,7 +94,8 @@ export default defineConfig({
 });
 ```
 
-JSON, JS, and MJS configs are also supported via cosmiconfig.
+JSON, JS, and MJS configs are also supported via cosmiconfig. Omit `framework`
+or set `framework: 'none'` for custom setups.
 
 ## Documentation
 
