@@ -16,22 +16,29 @@ describe('createAdapter', () => {
     expect(adapter.provider).toBe('openai');
   });
 
-  it('throws a helpful error for not-yet-released providers', () => {
-    expect(() => createAdapter({ provider: 'deepl', apiKey: 'k' })).toThrow(/not yet available/i);
+  it('creates the DeepL adapter (now released)', () => {
+    const adapter = createAdapter({ provider: 'deepl', apiKey: 'k:fx' });
+    expect(adapter.provider).toBe('deepl');
   });
 
-  it('exposes experimental providers when the flag is set', () => {
+  it('lists OpenAI and DeepL as released providers by default', () => {
+    expect(availableProviders()).toEqual(['openai', 'deepl']);
+  });
+
+  it('throws a helpful error for not-yet-released providers (Anthropic, Gemini)', () => {
+    expect(() => createAdapter({ provider: 'anthropic', apiKey: 'k' })).toThrow(
+      /not yet available/i,
+    );
+    expect(() => createAdapter({ provider: 'gemini', apiKey: 'k' })).toThrow(/not yet available/i);
+  });
+
+  it('exposes all providers when the experimental flag is set', () => {
     process.env.LANGSYNC_AI_EXPERIMENTAL = '1';
     expect(availableProviders()).toEqual(['openai', 'deepl', 'anthropic', 'gemini']);
   });
 
-  it('lists only released providers by default', () => {
-    expect(availableProviders()).toEqual(['openai']);
-  });
-
   it('constructs each experimental adapter when the flag is set', () => {
     process.env.LANGSYNC_AI_EXPERIMENTAL = '1';
-    expect(createAdapter({ provider: 'deepl', apiKey: 'k:fx' }).provider).toBe('deepl');
     expect(createAdapter({ provider: 'anthropic', apiKey: 'k' }).provider).toBe('anthropic');
     expect(createAdapter({ provider: 'gemini', apiKey: 'k' }).provider).toBe('gemini');
   });

@@ -30,3 +30,29 @@ export interface AdapterOptions {
   /** Injectable fetch implementation (defaults to global `fetch`). For tests. */
   fetchImpl?: typeof fetch;
 }
+
+/**
+ * Structured error thrown by translation adapters on provider or transport
+ * failure. Consumers can check `error.provider` and `error.statusCode` to
+ * emit actionable CLI messages without parsing error strings.
+ *
+ * @example
+ *   try {
+ *     await adapter.translate(req);
+ *   } catch (err) {
+ *     if (err instanceof TranslationAdapterError && err.statusCode === 429) {
+ *       logger.error(`Rate limited by ${err.provider}. Retry in 60 s.`);
+ *     }
+ *   }
+ */
+export class TranslationAdapterError extends Error {
+  constructor(
+    message: string,
+    public readonly provider: AIProvider,
+    public readonly statusCode?: number,
+    options?: ErrorOptions,
+  ) {
+    super(message, options);
+    this.name = 'TranslationAdapterError';
+  }
+}

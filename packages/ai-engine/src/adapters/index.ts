@@ -7,11 +7,14 @@ import { GeminiAdapter } from './gemini.js';
 /**
  * Providers that are fully released and shown in CLI help.
  *
- * Rollout order: OpenAI first, then DeepL, Anthropic, and Gemini. Unreleased
- * providers stay behind the `LANGSYNC_AI_EXPERIMENTAL` flag so they do not
- * surface in the public CLI surface before they are ready.
+ * Graduation history:
+ * - OpenAI: released at launch
+ * - DeepL: released in Phase 1 (simple REST API, no model choice, free/pro)
+ *
+ * Anthropic and Gemini are still behind `LANGSYNC_AI_EXPERIMENTAL` pending
+ * smoke-test sign-off.
  */
-const RELEASED_PROVIDERS: readonly AIProvider[] = ['openai'];
+const RELEASED_PROVIDERS: readonly AIProvider[] = ['openai', 'deepl'];
 
 const ALL_PROVIDERS: readonly AIProvider[] = ['openai', 'deepl', 'anthropic', 'gemini'];
 

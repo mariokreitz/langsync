@@ -25,6 +25,7 @@ describe('fillEmptyTranslations', () => {
 
     expect(result.tree).toEqual({ greet: 'Servus', farewell: 'Tschüss' });
     expect(result.translatedKeys).toEqual(['farewell']);
+    expect(result.skippedKeys).toEqual([]);
     expect(translate).toHaveBeenCalledTimes(1);
   });
 
@@ -40,6 +41,7 @@ describe('fillEmptyTranslations', () => {
 
     expect(result.tree).toEqual({ menu: { file: { save: 'Speichern' } } });
     expect(result.translatedKeys).toEqual(['menu.file.save']);
+    expect(result.skippedKeys).toEqual([]);
   });
 
   it('skips keys whose reference value is empty', async () => {
@@ -68,6 +70,55 @@ describe('fillEmptyTranslations', () => {
 
     expect(result.tree).toEqual({ a: 'AA' });
     expect(result.translatedKeys).toEqual([]);
+    expect(result.skippedKeys).toEqual([]);
     expect(translate).not.toHaveBeenCalled();
+  });
+
+  it('respects maxKeys: stops after the cap and records skippedKeys', async () => {
+    const { adapter, translate } = fakeAdapter();
+    const result = await fillEmptyTranslations({
+      reference: { a: 'A', b: 'B', c: 'C' },
+      target: { a: '', b: '', c: '' },
+      sourceLocale: 'en',
+      targetLocale: 'de',
+      adapter,
+      maxKeys: 2,
+    });
+
+    expect(result.translatedKeys).toHaveLength(2);
+    expect(result.skippedKeys).toHaveLength(1);
+    expect(translate).toHaveBeenCalledTimes(2);
+  });
+
+  it('translates all keys when maxKeys equals the total empty count', async () => {
+    const { adapter, translate } = fakeAdapter();
+    const result = await fillEmptyTranslations({
+      reference: { a: 'A', b: 'B' },
+      target: { a: '', b: '' },
+      sourceLocale: 'en',
+      targetLocale: 'de',
+      adapter,
+      maxKeys: 2,
+    });
+
+    expect(result.translatedKeys).toHaveLength(2);
+    expect(result.skippedKeys).toHaveLength(0);
+    expect(translate).toHaveBeenCalledTimes(2);
+  });
+
+  it('translates all keys when maxKeys is larger than available empty keys', async () => {
+    const { adapter, translate } = fakeAdapter();
+    const result = await fillEmptyTranslations({
+      reference: { a: 'A' },
+      target: { a: '' },
+      sourceLocale: 'en',
+      targetLocale: 'de',
+      adapter,
+      maxKeys: 100,
+    });
+
+    expect(result.translatedKeys).toHaveLength(1);
+    expect(result.skippedKeys).toHaveLength(0);
+    expect(translate).toHaveBeenCalledTimes(1);
   });
 });

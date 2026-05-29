@@ -24,6 +24,22 @@ async function runCli(...args: string[]): Promise<void> {
   await buildProgram().parseAsync(['node', 'langsync', 'translate', ...args]);
 }
 
+// Minimal valid result — tests add the fields they care about.
+function makeResult(
+  overrides: Partial<ReturnType<typeof runTranslate> extends Promise<infer R> ? R : never> = {},
+) {
+  return {
+    provider: 'openai' as const,
+    referenceLocale: 'en',
+    written: [],
+    planned: [],
+    translatedByLocale: {},
+    skippedByLocale: {},
+    totalTranslatableKeys: 0,
+    ...overrides,
+  };
+}
+
 describe('registerTranslateCommand', () => {
   beforeEach(() => {
     process.exitCode = undefined;
@@ -34,60 +50,105 @@ describe('registerTranslateCommand', () => {
     process.exitCode = undefined;
   });
 
-  it('forwards the provider, model, and dry-run flags to runTranslate', async () => {
-    mockedRunTranslate.mockResolvedValue({
-      provider: 'anthropic',
-      referenceLocale: 'en',
-      written: [],
-      planned: ['/p/i18n/de.json'],
-      translatedByLocale: { de: ['b'] },
-    });
+  it('forwards the provider, model, max-keys, and dry-run flags to runTranslate', async () => {
+    mockedRunTranslate.mockResolvedValue(makeResult({ totalTranslatableKeys: 0 }));
 
-    await runCli('--provider', 'anthropic', '--model', 'claude-haiku-4-5', '--dry-run');
+    await runCli(
+      '--provider',
+      'anthropic',
+      '--model',
+      'claude-haiku-4-5',
+      '--max-keys',
+      '10',
+      '--dry-run',
+    );
 
     expect(mockedRunTranslate).toHaveBeenCalledWith(
       expect.objectContaining({
         dryRun: true,
         provider: 'anthropic',
         model: 'claude-haiku-4-5',
+        maxKeys: 10,
       }),
     );
-    // dry-run uses the "Would translate" verb and skips the written loop.
-    expect(mockedLogger.success).toHaveBeenCalledWith(expect.stringContaining('Would translate'));
-    expect(mockedLogger.info).not.toHaveBeenCalled();
+  });
+
+  it('dry-run with nothing to translate logs info message', async () => {
+    mockedRunTranslate.mockResolvedValue(makeResult({ totalTranslatableKeys: 0 }));
+
+    await runCli('--dry-run');
+
+    expect(mockedLogger.info).toHaveBeenCalledWith(expect.stringContaining('Nothing to translate'));
+    expect(mockedLogger.success).not.toHaveBeenCalled();
+  });
+
+  it('dry-run with keys to translate shows key counts via logger.info', async () => {
+    mockedRunTranslate.mockResolvedValue(
+      makeResult({
+        translatedByLocale: { de: ['a', 'b'], fr: ['a'] },
+        totalTranslatableKeys: 3,
+      }),
+    );
+
+    await runCli('--dry-run');
+
+    expect(mockedLogger.info).toHaveBeenCalledWith(expect.stringContaining('Would translate'));
+    expect(mockedLogger.success).not.toHaveBeenCalled();
   });
 
   it('reports written files on a non-dry-run translate', async () => {
-    mockedRunTranslate.mockResolvedValue({
-      provider: 'openai',
-      referenceLocale: 'en',
-      written: ['/p/i18n/de.json'],
-      planned: ['/p/i18n/de.json'],
-      translatedByLocale: { de: ['b'], fr: [] },
-    });
+    mockedRunTranslate.mockResolvedValue(
+      makeResult({
+        written: ['/p/i18n/de.json'],
+        planned: ['/p/i18n/de.json'],
+        translatedByLocale: { de: ['b'], fr: [] },
+        totalTranslatableKeys: 1,
+      }),
+    );
 
     await runCli();
 
     expect(mockedLogger.success).toHaveBeenCalledWith(expect.stringContaining('Translated'));
-    // The locale with zero keys is skipped, the written file is reported.
     expect(mockedLogger.success).toHaveBeenCalledTimes(1);
     expect(mockedLogger.info).toHaveBeenCalledWith(expect.stringContaining('Wrote'));
     expect(process.exitCode).toBeUndefined();
   });
 
+  it('warns when some keys were skipped due to --max-keys', async () => {
+    mockedRunTranslate.mockResolvedValue(
+      makeResult({
+        written: ['/p/i18n/de.json'],
+        planned: ['/p/i18n/de.json'],
+        translatedByLocale: { de: ['a'] },
+        skippedByLocale: { de: ['b', 'c'] },
+        totalTranslatableKeys: 3,
+      }),
+    );
+
+    await runCli('--max-keys', '1');
+
+    expect(mockedLogger.warn).toHaveBeenCalledWith(expect.stringContaining('skipped'));
+  });
+
   it('logs an informational message when there is nothing to translate', async () => {
-    mockedRunTranslate.mockResolvedValue({
-      provider: 'openai',
-      referenceLocale: 'en',
-      written: [],
-      planned: [],
-      translatedByLocale: { de: [] },
-    });
+    mockedRunTranslate.mockResolvedValue(
+      makeResult({ translatedByLocale: { de: [] }, totalTranslatableKeys: 0 }),
+    );
 
     await runCli();
 
     expect(mockedLogger.info).toHaveBeenCalledWith(expect.stringContaining('Nothing to translate'));
     expect(mockedLogger.success).not.toHaveBeenCalled();
+  });
+
+  it('rejects invalid --max-keys values', async () => {
+    await runCli('--max-keys', 'abc');
+
+    expect(mockedLogger.error).toHaveBeenCalledWith(
+      expect.stringContaining('--max-keys must be a positive integer'),
+    );
+    expect(process.exitCode).toBe(1);
+    expect(mockedRunTranslate).not.toHaveBeenCalled();
   });
 
   it('logs the error and sets a failing exit code when runTranslate throws', async () => {
