@@ -9,9 +9,9 @@ export const LangSyncConfigSchema = z.object({
   locales: z.array(z.string()).min(1).describe('List of supported locales.'),
   defaultLocale: z.string().optional(),
   framework: z
-    .enum(['i18next', 'ngx-translate', 'react-intl'])
+    .enum(['i18next', 'ngx-translate', 'react-intl', 'none'])
     .optional()
-    .describe('i18n framework integration.'),
+    .describe('i18n framework integration. Use `none` to opt out explicitly.'),
   excel: z
     .object({
       file: z.string().default('translations.xlsx'),
