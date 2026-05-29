@@ -1,13 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type * as SharedFs from '@langsync/shared/fs';
 
 vi.mock('@langsync/shared/config', () => ({ loadConfig: vi.fn() }));
-vi.mock('@langsync/shared/fs', () => ({
-  loadLocaleFiles: vi.fn(),
-  writeJson: vi.fn(),
-}));
+vi.mock('@langsync/shared/fs', async () => {
+  const actual = await vi.importActual<typeof SharedFs>('@langsync/shared/fs');
+  return { ...actual, loadLocaleFiles: vi.fn(), writeJson: vi.fn() };
+});
 
 import { loadConfig } from '@langsync/shared/config';
-import { loadLocaleFiles, writeJson } from '@langsync/shared/fs';
+import { loadLocaleFiles, writeJson, type LoadedLocaleFile } from '@langsync/shared/fs';
 import { runSync } from './run.js';
 
 const mockedLoadConfig = vi.mocked(loadConfig);
@@ -19,6 +20,17 @@ const baseConfig = {
   filepath: '/p/langsync.config.ts',
 };
 
+function file(
+  locale: string,
+  namespace: string | null,
+  translations: object,
+  exists = true,
+): LoadedLocaleFile {
+  const path =
+    namespace === null ? `/p/i18n/${locale}.json` : `/p/i18n/${locale}/${namespace}.json`;
+  return { locale, namespace, path, exists, translations };
+}
+
 describe('runSync', () => {
   beforeEach(() => {
     mockedLoadConfig.mockReset();
@@ -27,179 +39,87 @@ describe('runSync', () => {
   });
   afterEach(() => vi.clearAllMocks());
 
-  it('throws and loads no files when namespaces are configured', async () => {
+  it('keeps single-file behavior unchanged', async () => {
+    mockedLoadConfig.mockResolvedValue(baseConfig);
+    mockedLoadLocaleFiles.mockResolvedValue([
+      file('en', null, { a: 'A', b: 'B' }),
+      file('de', null, { a: 'AA' }),
+    ]);
+
+    const result = await runSync({ cwd: '/p' });
+
+    expect(mockedWriteJson).toHaveBeenCalledWith('/p/i18n/de.json', { a: 'AA', b: '' });
+    expect(result.written).toEqual(['/p/i18n/de.json']);
+    expect(result.planned).toEqual(['/p/i18n/de.json']);
+    expect(result.unchanged).toEqual([]);
+    expect(result.diffsByPath['/p/i18n/de.json']!.added).toContain('b');
+  });
+
+  it('syncs locale-dir namespaces, creates missing target files, and tracks unchanged files', async () => {
     mockedLoadConfig.mockResolvedValue({
       ...baseConfig,
       config: { ...baseConfig.config, namespaces: { structure: 'locale-dir' } },
     });
-    await expect(runSync({ cwd: '/p' })).rejects.toThrow(/follow-up release/i);
-    expect(mockedLoadLocaleFiles).not.toHaveBeenCalled();
-  });
-
-  it('writes synced trees for every non-reference locale that has changes', async () => {
-    mockedLoadConfig.mockResolvedValue(baseConfig);
     mockedLoadLocaleFiles.mockResolvedValue([
-      {
-        locale: 'en',
-        namespace: null,
-        path: '/p/i18n/en.json',
-        exists: true,
-        translations: { a: 'A', b: 'B' },
-      },
-      {
-        locale: 'de',
-        namespace: null,
-        path: '/p/i18n/de.json',
-        exists: true,
-        translations: { a: 'AA' },
-      },
+      file('en', 'auth/login', { title: 'Login' }),
+      file('en', 'common', { ok: 'OK' }),
+      file('de', 'auth/login', {}, false),
+      file('de', 'common', { ok: 'Okay' }),
     ]);
 
     const result = await runSync({ cwd: '/p' });
 
-    expect(mockedWriteJson).toHaveBeenCalledTimes(1);
-    expect(mockedWriteJson).toHaveBeenCalledWith('/p/i18n/de.json', { a: 'AA', b: '' });
-    expect(result.written).toEqual(['/p/i18n/de.json']);
-    expect(result.unchanged).toEqual([]);
+    expect(mockedWriteJson).toHaveBeenCalledWith('/p/i18n/de/auth/login.json', { title: '' });
+    expect(result.planned).toEqual(['/p/i18n/de/auth/login.json']);
+    expect(result.unchanged).toEqual(['/p/i18n/de/common.json']);
   });
 
-  it('skips writing when locale is already in sync with the reference', async () => {
-    mockedLoadConfig.mockResolvedValue(baseConfig);
+  it('syncs locale-prefix namespaces to prefixed files in dry-run', async () => {
+    mockedLoadConfig.mockResolvedValue({
+      ...baseConfig,
+      config: { ...baseConfig.config, namespaces: { structure: 'locale-prefix' } },
+    });
     mockedLoadLocaleFiles.mockResolvedValue([
-      {
-        locale: 'en',
-        namespace: null,
-        path: '/p/i18n/en.json',
-        exists: true,
-        translations: { a: 'A' },
-      },
-      {
-        locale: 'de',
-        namespace: null,
-        path: '/p/i18n/de.json',
-        exists: true,
-        translations: { a: 'AA' },
-      },
-    ]);
-
-    const result = await runSync({ cwd: '/p' });
-
-    // de has no missing/extra keys after sync — should be skipped
-    expect(mockedWriteJson).not.toHaveBeenCalled();
-    expect(result.written).toEqual([]);
-    expect(result.planned).toEqual([]);
-    expect(result.unchanged).toEqual(['/p/i18n/de.json']);
-  });
-
-  it('does not write to the reference locale file', async () => {
-    mockedLoadConfig.mockResolvedValue(baseConfig);
-    mockedLoadLocaleFiles.mockResolvedValue([
-      {
-        locale: 'en',
-        namespace: null,
-        path: '/p/i18n/en.json',
-        exists: true,
-        translations: { a: 'A' },
-      },
-      {
-        locale: 'de',
-        namespace: null,
-        path: '/p/i18n/de.json',
-        exists: true,
-        translations: { a: 'AA' },
-      },
-    ]);
-
-    await runSync({ cwd: '/p' });
-    const targets = mockedWriteJson.mock.calls.map((c) => c[0]);
-    expect(targets).not.toContain('/p/i18n/en.json');
-  });
-
-  it('honors dryRun: reports planned writes without touching disk', async () => {
-    mockedLoadConfig.mockResolvedValue(baseConfig);
-    mockedLoadLocaleFiles.mockResolvedValue([
-      {
-        locale: 'en',
-        namespace: null,
-        path: '/p/i18n/en.json',
-        exists: true,
-        translations: { a: 'A', b: 'B' },
-      },
-      {
-        locale: 'de',
-        namespace: null,
-        path: '/p/i18n/de.json',
-        exists: true,
-        translations: { a: 'AA' },
-      },
+      { ...file('en', 'admin.users', { title: 'Users' }), path: '/p/i18n/en.admin.users.json' },
+      { ...file('de', 'admin.users', {}), path: '/p/i18n/de.admin.users.json', exists: false },
     ]);
 
     const result = await runSync({ cwd: '/p', dryRun: true });
+
     expect(mockedWriteJson).not.toHaveBeenCalled();
     expect(result.written).toEqual([]);
-    expect(result.planned).toEqual(['/p/i18n/de.json']);
-    expect(result.unchanged).toEqual([]);
+    expect(result.planned).toEqual(['/p/i18n/de.admin.users.json']);
   });
 
-  it('populates diffsByPath for changed files', async () => {
-    mockedLoadConfig.mockResolvedValue(baseConfig);
+  it('rewrites extra target-only namespaces to empty objects without deleting files', async () => {
+    mockedLoadConfig.mockResolvedValue({
+      ...baseConfig,
+      config: { ...baseConfig.config, namespaces: { structure: 'locale-dir' } },
+    });
     mockedLoadLocaleFiles.mockResolvedValue([
-      {
-        locale: 'en',
-        namespace: null,
-        path: '/p/i18n/en.json',
-        exists: true,
-        translations: { a: 'A', b: 'B' },
-      },
-      {
-        locale: 'de',
-        namespace: null,
-        path: '/p/i18n/de.json',
-        exists: true,
-        translations: { a: 'AA' },
-      },
-    ]);
-
-    const result = await runSync({ cwd: '/p', dryRun: true });
-    expect(result.diffsByPath['/p/i18n/de.json']).toBeDefined();
-    expect(result.diffsByPath['/p/i18n/de.json']!.added).toContain('b');
-  });
-
-  it('does not populate diffsByPath for unchanged files', async () => {
-    mockedLoadConfig.mockResolvedValue(baseConfig);
-    mockedLoadLocaleFiles.mockResolvedValue([
-      {
-        locale: 'en',
-        namespace: null,
-        path: '/p/i18n/en.json',
-        exists: true,
-        translations: { a: 'A' },
-      },
-      {
-        locale: 'de',
-        namespace: null,
-        path: '/p/i18n/de.json',
-        exists: true,
-        translations: { a: 'AA' },
-      },
+      file('en', 'legacy', {}, false),
+      file('de', 'legacy', { old: 'Alt' }),
     ]);
 
     const result = await runSync({ cwd: '/p' });
-    expect(result.diffsByPath['/p/i18n/de.json']).toBeUndefined();
+
+    expect(mockedWriteJson).toHaveBeenCalledWith('/p/i18n/de/legacy.json', {});
+    expect(result.planned).toEqual(['/p/i18n/de/legacy.json']);
   });
 
-  it('throws when reference locale file is not present', async () => {
-    mockedLoadConfig.mockResolvedValue(baseConfig);
-    mockedLoadLocaleFiles.mockResolvedValue([
-      { locale: 'de', namespace: null, path: '/p/i18n/de.json', exists: true, translations: {} },
-    ]);
+  it('throws the shared D10 error when no namespaces are discovered', async () => {
+    mockedLoadConfig.mockResolvedValue({
+      ...baseConfig,
+      config: { ...baseConfig.config, namespaces: { structure: 'locale-dir' } },
+    });
+    mockedLoadLocaleFiles.mockResolvedValue([]);
 
-    await expect(runSync({ cwd: '/p' })).rejects.toThrow(/reference locale/i);
+    await expect(runSync({ cwd: '/p' })).rejects.toThrow('No namespace files found under "./i18n"');
+    expect(mockedWriteJson).not.toHaveBeenCalled();
   });
 
   it('throws when config is not found', async () => {
     mockedLoadConfig.mockResolvedValue(null);
-
     await expect(runSync({ cwd: '/p' })).rejects.toThrow(/langsync init/i);
   });
 });

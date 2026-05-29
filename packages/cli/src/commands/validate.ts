@@ -1,10 +1,14 @@
 import { type Command } from 'commander';
 import chalk from 'chalk';
 import { logger } from '@langsync/shared/logger';
-import { runValidate } from './validate/run.js';
+import { runValidate, type NamespacedValidationIssue } from './validate/run.js';
 
 interface ValidateFlags {
   reporter: 'pretty' | 'json';
+}
+
+function formatIssueKey(issue: NamespacedValidationIssue): string {
+  return issue.namespace === null ? issue.key : `${issue.namespace}:${issue.key}`;
 }
 
 export function registerValidateCommand(program: Command): void {
@@ -27,7 +31,7 @@ export function registerValidateCommand(program: Command): void {
               byType[issue.type]++;
               const colored =
                 issue.type === 'empty' ? chalk.yellow(issue.type) : chalk.red(issue.type);
-              logger.info(`${colored}  ${chalk.cyan(issue.locale)}  ${issue.key}`);
+              logger.info(`${colored}  ${chalk.cyan(issue.locale)}  ${formatIssueKey(issue)}`);
             }
             console.log();
             logger.info(

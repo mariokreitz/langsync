@@ -1,8 +1,8 @@
-import { loadConfig } from '@langsync/shared/config';
-import { loadLocaleFiles, writeJson } from '@langsync/shared/fs';
-import { flatten } from '@langsync/core';
 import { createAdapter, fillEmptyTranslations, type AIProvider } from '@langsync/ai-engine';
-import { type LocaleFile } from '@langsync/shared/types';
+import { flatten } from '@langsync/core';
+import { loadConfig } from '@langsync/shared/config';
+import { indexLocaleFiles, loadLocaleFiles, writeJson } from '@langsync/shared/fs';
+import { noNamespacesError } from '../shared/namespace-error.js';
 
 export interface RunTranslateOptions {
   cwd: string;
@@ -14,10 +14,16 @@ export interface RunTranslateOptions {
   /**
    * Maximum total number of keys to translate across all target locales.
    * Keys are selected deterministically (same order on every run) by
-   * iterating target locales in config order, then keys in reference order.
-   * Remaining untranslated keys are reported in `skippedKeys`.
+   * iterating target locales in config order, then namespaces in order, then
+   * keys in reference order. Remaining untranslated keys are reported.
    */
   maxKeys?: number;
+}
+
+export interface TranslationEntry {
+  namespace: string | null;
+  key: string;
+  path: string;
 }
 
 export interface RunTranslateResult {
@@ -28,32 +34,29 @@ export interface RunTranslateResult {
   /** Files that have at least one translated key (the change candidates). */
   planned: string[];
   /** Translated dot-notated keys per locale. */
-  translatedByLocale: Record<string, string[]>;
-  /**
-   * Keys that were skipped due to the `--max-keys` cap, grouped by locale.
-   * Empty when no cap was set or the cap was not reached.
-   */
-  skippedByLocale: Record<string, string[]>;
-  /**
-   * Total number of keys that could be translated (empty in target,
-   * non-empty in reference) before any cap is applied.
-   */
+  translatedByLocale: Record<string, TranslationEntry[]>;
+  /** Keys that were skipped due to the `--max-keys` cap, grouped by locale. */
+  skippedByLocale: Record<string, TranslationEntry[]>;
+  /** Total number of keys that could be translated before any cap is applied. */
   totalTranslatableKeys: number;
 }
 
-/** A translation candidate: one locale × one key to translate. */
-interface TranslateCandidate {
-  file: LocaleFile;
-  key: string;
+interface TranslateCandidate extends TranslationEntry {
+  locale: string;
   sourceValue: string;
+}
+
+function isEmpty(value: string | undefined): boolean {
+  return value === undefined || value.trim() === '';
+}
+
+function candidateEntry(candidate: TranslateCandidate): TranslationEntry {
+  return { namespace: candidate.namespace, key: candidate.key, path: candidate.path };
 }
 
 /**
  * Fill empty values in every non-reference locale using the configured AI
  * provider, preserving existing translations.
- *
- * The candidate list is built before any API call so `--max-keys` is applied
- * deterministically, without bias from iteration timing.
  */
 export async function runTranslate(options: RunTranslateOptions): Promise<RunTranslateResult> {
   const loaded = await loadConfig(options.cwd);
@@ -61,21 +64,9 @@ export async function runTranslate(options: RunTranslateOptions): Promise<RunTra
     throw new Error('No LangSync config found. Run `langsync init` first.');
   }
   const { config } = loaded;
-  if (config.namespaces) {
-    throw new Error(
-      'Namespace support for this command is coming in a follow-up release. ' +
-        'Remove the `namespaces` block from your config to use single-file mode.',
-    );
-  }
-
   const referenceLocale = config.defaultLocale ?? config.locales[0]!;
 
   const provider = options.provider ?? config.ai?.provider ?? 'openai';
-  const adapter = createAdapter({
-    provider,
-    apiKey: config.ai?.apiKey,
-    model: options.model ?? config.ai?.model,
-  });
 
   const files = await loadLocaleFiles({
     cwd: options.cwd,
@@ -83,70 +74,110 @@ export async function runTranslate(options: RunTranslateOptions): Promise<RunTra
     locales: config.locales,
     namespaces: config.namespaces,
   });
+  const index = indexLocaleFiles(files);
+  const namespaced = config.namespaces !== undefined;
+  if (namespaced && index.namespaces.length === 0) {
+    throw noNamespacesError(referenceLocale, config.input);
+  }
+  const nsKeys: (string | null)[] = namespaced ? index.namespaces : [null];
 
-  const reference = files.find((f) => f.locale === referenceLocale);
-  if (!reference) {
+  const referenceBucket = index.byLocale[referenceLocale];
+  if (!referenceBucket) {
     throw new Error(`Could not find reference locale file for "${referenceLocale}".`);
   }
 
-  const targets = files.filter((f) => f.locale !== referenceLocale);
+  const adapter = createAdapter({
+    provider,
+    apiKey: config.ai?.apiKey,
+    model: options.model ?? config.ai?.model,
+  });
 
-  // Build the full candidate list before any API calls so we can:
-  // 1. Report an accurate count for --dry-run
-  // 2. Apply --max-keys deterministically (no mid-stream surprises)
-  const refFlat = flatten(reference.translations);
   const allCandidates: TranslateCandidate[] = [];
-  for (const target of targets) {
-    const targetFlat = flatten(target.translations);
-    for (const [key, value] of Object.entries(refFlat)) {
-      if (!value || value.trim() === '') continue;
-      if (targetFlat[key] && targetFlat[key].trim() !== '') continue;
-      allCandidates.push({ file: target, key, sourceValue: value });
+  for (const targetLocale of config.locales) {
+    if (targetLocale === referenceLocale) continue;
+    const targetBucket = index.byLocale[targetLocale];
+    if (!targetBucket) continue;
+
+    for (const nsKey of nsKeys) {
+      const reference = referenceBucket.get(nsKey);
+      const target = targetBucket.get(nsKey);
+      if (!reference || !target) continue;
+
+      const refFlat = flatten(reference.translations);
+      const targetFlat = flatten(target.translations);
+      for (const [key, value] of Object.entries(refFlat)) {
+        if (isEmpty(value)) continue;
+        if (!isEmpty(targetFlat[key])) continue;
+        allCandidates.push({
+          locale: targetLocale,
+          namespace: nsKey,
+          path: target.path,
+          key,
+          sourceValue: value,
+        });
+      }
     }
   }
 
   const totalTranslatableKeys = allCandidates.length;
   const limited = options.maxKeys ? allCandidates.slice(0, options.maxKeys) : allCandidates;
+  const limitedByPath = new Map<string, TranslateCandidate[]>();
+  const skippedCandidates = options.maxKeys ? allCandidates.slice(options.maxKeys) : [];
 
-  // Compute per-locale max-key budgets from the capped list
-  const perLocaleMaxKeys: Record<string, number> = {};
   for (const candidate of limited) {
-    perLocaleMaxKeys[candidate.file.locale] = (perLocaleMaxKeys[candidate.file.locale] ?? 0) + 1;
+    const entries = limitedByPath.get(candidate.path) ?? [];
+    entries.push(candidate);
+    limitedByPath.set(candidate.path, entries);
   }
 
   const written: string[] = [];
   const planned: string[] = [];
-  const translatedByLocale: Record<string, string[]> = {};
-  const skippedByLocale: Record<string, string[]> = {};
+  const translatedByLocale: Record<string, TranslationEntry[]> = {};
+  const skippedByLocale: Record<string, TranslationEntry[]> = {};
 
-  for (const target of targets) {
-    const localeMax = perLocaleMaxKeys[target.locale];
-    // If this locale has no candidates in the limited list, skip entirely
-    if (options.maxKeys !== undefined && !localeMax) {
-      skippedByLocale[target.locale] = allCandidates
-        .filter((c) => c.file.locale === target.locale)
-        .map((c) => c.key);
-      continue;
-    }
+  for (const candidate of skippedCandidates) {
+    if (limitedByPath.has(candidate.path)) continue;
+    (skippedByLocale[candidate.locale] ??= []).push(candidateEntry(candidate));
+  }
 
-    const { tree, translatedKeys, skippedKeys } = await fillEmptyTranslations({
-      reference: reference.translations,
-      target: target.translations,
-      sourceLocale: referenceLocale,
-      targetLocale: target.locale,
-      adapter,
-      maxKeys: localeMax,
-    });
+  for (const targetLocale of config.locales) {
+    if (targetLocale === referenceLocale) continue;
+    const targetBucket = index.byLocale[targetLocale];
+    if (!targetBucket) continue;
 
-    translatedByLocale[target.locale] = translatedKeys;
-    if (skippedKeys.length > 0) skippedByLocale[target.locale] = skippedKeys;
+    for (const nsKey of nsKeys) {
+      const reference = referenceBucket.get(nsKey);
+      const target = targetBucket.get(nsKey);
+      if (!reference || !target) continue;
 
-    if (translatedKeys.length === 0) continue;
+      const budget = limitedByPath.get(target.path)?.length;
+      if (budget === undefined) continue;
 
-    planned.push(target.path);
-    if (!options.dryRun) {
-      await writeJson(target.path, tree);
-      written.push(target.path);
+      const { tree, translatedKeys, skippedKeys } = await fillEmptyTranslations({
+        reference: reference.translations,
+        target: target.translations,
+        sourceLocale: referenceLocale,
+        targetLocale,
+        adapter,
+        maxKeys: budget,
+      });
+
+      if (translatedKeys.length > 0) {
+        (translatedByLocale[targetLocale] ??= []).push(
+          ...translatedKeys.map((key) => ({ namespace: nsKey, key, path: target.path })),
+        );
+        planned.push(target.path);
+        if (!options.dryRun) {
+          await writeJson(target.path, tree);
+          written.push(target.path);
+        }
+      }
+
+      if (skippedKeys.length > 0) {
+        (skippedByLocale[targetLocale] ??= []).push(
+          ...skippedKeys.map((key) => ({ namespace: nsKey, key, path: target.path })),
+        );
+      }
     }
   }
 

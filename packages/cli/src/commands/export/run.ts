@@ -1,7 +1,8 @@
 import { resolve } from 'node:path';
-import { loadConfig } from '@langsync/shared/config';
-import { loadLocaleFiles } from '@langsync/shared/fs';
 import { exportToExcel } from '@langsync/excel-engine';
+import { loadConfig } from '@langsync/shared/config';
+import { indexLocaleFiles, loadLocaleFiles } from '@langsync/shared/fs';
+import { noNamespacesError } from '../shared/namespace-error.js';
 
 export interface RunExportExcelOptions {
   cwd: string;
@@ -15,6 +16,7 @@ export interface RunExportExcelResult {
   file: string;
   sheetName: string;
   locales: string[];
+  namespaces: string[];
 }
 
 const DEFAULT_FILE = 'translations.xlsx';
@@ -31,12 +33,7 @@ export async function runExportExcel(
     throw new Error('No LangSync config found. Run `langsync init` first.');
   }
   const { config } = loaded;
-  if (config.namespaces) {
-    throw new Error(
-      'Namespace support for this command is coming in a follow-up release. ' +
-        'Remove the `namespaces` block from your config to use single-file mode.',
-    );
-  }
+  const referenceLocale = config.defaultLocale ?? config.locales[0]!;
 
   const file = resolve(options.cwd, options.file ?? config.excel?.file ?? DEFAULT_FILE);
   const sheetName = options.sheetName ?? config.excel?.sheetName ?? DEFAULT_SHEET;
@@ -47,6 +44,10 @@ export async function runExportExcel(
     locales: config.locales,
     namespaces: config.namespaces,
   });
+  const index = indexLocaleFiles(files);
+  if (config.namespaces !== undefined && index.namespaces.length === 0) {
+    throw noNamespacesError(referenceLocale, config.input);
+  }
 
   await exportToExcel({
     file,
@@ -58,5 +59,5 @@ export async function runExportExcel(
     })),
   });
 
-  return { file, sheetName, locales: files.map((f) => f.locale) };
+  return { file, sheetName, locales: config.locales, namespaces: index.namespaces };
 }
