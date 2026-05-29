@@ -1,5 +1,12 @@
 # @mariokreitz/langsync
 
+## 0.4.1
+
+### Patch Changes
+
+- e8dc279: Refresh the CLI README to match the current command set, documentation links, and AI provider availability notes.
+- e8dc279: Accept `framework: 'none'` in the public config schema and tighten workflow security defaults.
+
 ## 0.4.0
 
 ### Minor Changes
