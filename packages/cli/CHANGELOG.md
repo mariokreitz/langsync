@@ -1,5 +1,18 @@
 # @mariokreitz/langsync
 
+## 0.6.0
+
+### Minor Changes
+
+- 4730e15: Add namespace-aware CLI consumers for sync, validate, find-missing, translate, export, and import.
+
+  Result shapes now preserve namespace context through `NamespacedValidationIssue`, `MissingEntry`, `TranslationEntry`, and export `namespaces` metadata.
+
+### Patch Changes
+
+- e70f8f2: Add the init layout prompt for single-file, locale-dir, and locale-prefix locale files, including namespaced scaffolding for initial namespace files.
+- a74652c: excel-engine: namespace-aware export/import. Export emits a `namespace` column when any file has a namespace; import returns a `{ format, locales }` discriminator and reconstructs per-namespace trees. Single-file workbooks remain fully supported. NOTE: the excel-engine TypeScript contract changed (`ExportOptions.locales` → `files`; `ImportResult` adds `format` and `namespace`).
+
 ## 0.5.0
 
 ### Minor Changes

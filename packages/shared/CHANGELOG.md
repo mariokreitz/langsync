@@ -1,5 +1,11 @@
 # @langsync/shared
 
+## 0.2.1
+
+### Patch Changes
+
+- 8511d14: Add namespace-aware locale file loader and config schema (foundation for namespace support). Adds optional `namespaces` block, `LocaleFile.namespace`, and `resolveLocaleFilePath`/`indexLocaleFiles` fs helpers.
+
 ## 0.2.0
 
 ### Minor Changes

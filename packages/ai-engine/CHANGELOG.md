@@ -1,5 +1,13 @@
 # @langsync/ai-engine
 
+## 0.2.1
+
+### Patch Changes
+
+- Updated dependencies [8511d14]
+  - @langsync/shared@0.2.1
+  - @langsync/core@0.1.2
+
 ## 0.2.0
 
 ### Minor Changes
